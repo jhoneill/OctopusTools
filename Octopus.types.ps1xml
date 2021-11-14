@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+  <Type><Name>OctopusActionTemplate</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet><Name>DefaultDisplayPropertySet</Name><ReferencedProperties>
+            <Name>ID</Name>
+            <Name>ExtendedType</Name>
+            <Name>Name</Name>
+            </ReferencedProperties></PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptProperty><Name>ScriptBody</Name>        <GetScriptBlock>$(if ($this.ActionType -eq  'Octopus.Script') {$this.Properties.'Octopus.Action.Script.ScriptBody' -replace '\r?\n',[System.Environment]::NewLine} else {''})</GetScriptBlock></ScriptProperty>
+      <ScriptProperty><Name>ScriptSource</Name>      <GetScriptBlock>$(if ($this.ActionType -eq  'Octopus.Script') {$this.Properties.'Octopus.Action.Script.ScriptSource'}        else {''})</GetScriptBlock></ScriptProperty>
+      <ScriptProperty><Name>ScriptFileName</Name>    <GetScriptBlock>$(if ($this.ActionType -eq  'Octopus.Script') {$this.Properties.'Octopus.Action.Script.ScriptFileName'}      else {''})</GetScriptBlock></ScriptProperty>
+      <ScriptProperty><Name>ScriptParameters</Name>  <GetScriptBlock>$(if ($this.ActionType -eq  'Octopus.Script') {$this.Properties.'Octopus.Action.Script.ScriptParameters'}    else {''})</GetScriptBlock></ScriptProperty>
+      <ScriptProperty><Name>PackageID</Name>         <GetScriptBlock>$(if ($this.ActionType -eq  'Octopus.Script') {$this.Properties.'Octopus.Action.Package.PackageId'}          else {''})</GetScriptBlock></ScriptProperty>
+      <ScriptProperty><Name>FeedId</Name>            <GetScriptBlock>$(if ($this.ActionType -eq  'Octopus.Script') {$this.Properties.'Octopus.Action.Package.FeedId'}             else {''})</GetScriptBlock></ScriptProperty>
+      <ScriptProperty><Name>DownloadOnTentacle</Name><GetScriptBlock>$(if ($this.ActionType -eq  'Octopus.Script') {$this.Properties.'Octopus.Action.Package.DownloadOnTentacle'} else {''})</GetScriptBlock></ScriptProperty>
+      <ScriptProperty><Name>ExtendedType</Name>      <GetScriptBlock>$(if ($this.type)            {$this.type}        elseif ($this.ActionType) {$this.ActionType}                else {''})</GetScriptBlock></ScriptProperty>
+      <ScriptMethod><Name>Usage</Name><Script>                      Invoke-OctopusMethod -pstype OctopusUsage          -EndPoint "actiontemplates/$($this.id)/usage"</Script></ScriptMethod>
+      <ScriptMethod><Name>Versions</Name><Script> param($versionNo) Invoke-OctopusMethod -PSType Octopusactiontemplate -EndPoint($this.Links.Versions -replace "{.*$",$versionno) </Script></ScriptMethod>
+      <ScriptMethod><Name>UseDetails</Name><Script>
+        foreach ($u in   (Invoke-OctopusMethod -pstype 'OctopusUsage' -EndPoint "actiontemplates/$($this.id)/usage") ) {
+          $u.deploymentprocess().steps.actions.where({$_.id -eq $u.ActionId}).properties |
+            Select-Object -Property @{n='ActionTemplateName'; e={$this.name}},
+                                    @{n='Action TemplateID';  e={$this.id}} ,
+                                    @{n='Project Name';       e={$u.ProjectName}},
+                                    @{n='Step Name';          e={$u.StepName}},
+                                    @{n='Action Name';        e={$u.ActionName}},
+                                    * -ExcludeProperty "Octopus.action.*"  }
+      </Script></ScriptMethod>
+      <PropertySet><Name>Script</Name><ReferencedProperties>
+            <Name>PackageID</Name>
+            <Name>FeedId</Name>
+            <Name>ScriptFileName</Name>
+            <Name>ScriptParameters</Name>
+            <Name>ScriptBody</Name>
+            </ReferencedProperties>
+        </PropertySet>
+        <PropertySet><Name>Export</Name><ReferencedProperties>
+            <Name>ActionType</Name>
+            <Name>Description</Name>
+            <Name>Name</Name>
+            <Name>Packages</Name>
+            <Name>Parameters</Name>
+            <Name>Properties</Name>
+            </ReferencedProperties>
+        </PropertySet>
+    </Members>
+  </Type>
+  <Type><Name>OctopusArtifact</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Filename</Name>
+              <Name>ServerTaskId</Name>
+              <Name>Created</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptMethod><Name>Task</Name><Script>Get-OctopusTask $this.ServerTaskId</Script></ScriptMethod>
+      <ScriptMethod><Name>Download</Name><Script>
+            Param ([parameter(Mandatory=$true)]$Destination)
+            if (-not (Test-path -PathType Container -Path $Destination)) {throw "$Destination is not a valid directory"}
+            else {
+            $Outfile =  Join-Path (Resolve-Path $Destination) $this.Filename
+            Invoke-WebRequest -OutFile $outFile -URI (($env:OctopusUrl -replace '/$','') +  $this.Links.Content ) -Headers  @{'X-Octopus-ApiKey' = $env:OctopusApiKey }
+            Get-Item $OutFile
+            }
+        </Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusDeployment</Name>
+    <Members>
+        <ScriptMethod><Name>Artifacts</Name>        <Script>Invoke-OctopusMethod -PSType OctopusArtifact          -EndPoint  $this.Links.Artifacts -ExpandItems </Script></ScriptMethod>
+        <ScriptMethod><Name>DeploymentProcess</Name><Script>Invoke-OctopusMethod -PSType OctopusDeploymentProcess -EndPoint  $this.Links.DeploymentProcess </Script>     </ScriptMethod>
+        <ScriptMethod><Name>Project</Name>          <Script>Invoke-OctopusMethod -PSType OctopusProject           -EndPoint  $this.Links.Project </Script>               </ScriptMethod>
+        <ScriptMethod><Name>Release</Name>          <Script>Invoke-OctopusMethod -PSType OctopusRelease           -EndPoint  $this.Links.Release </Script>               </ScriptMethod>
+        <ScriptMethod><Name>Task</Name>             <Script>Invoke-OctopusMethod -PSType OctopusTask              -EndPoint  $this.Links.Task </Script>                  </ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusEnvironment</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>SortOrder</Name>
+              <Name>Id</Name>
+              <Name>Name</Name>
+              <Name>UseGuidedFailure</Name>
+              <Name>AllowDynamicInfrastructure</Name>
+              <Name>Description</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptMethod><Name>Machines</Name><Script>Invoke-OctopusMethod  -PSType OctopusMachine -EndPoint ($this.Links.Machines -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
+      <ScriptMethod><Name>Variables</Name><Script>Invoke-OctopusMethod                        -EndPoint  $this.Links.SinglyScopedVariableDetails</Script>                </ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusEvent</Name>
+    <Members>
+          <PropertySet><Name>Msg</Name><ReferencedProperties>
+            <Name>ID</Name>
+            <Name>category</Name>
+            <Name>Time</Name>
+            <Name>Message</Name>
+        </ReferencedProperties></PropertySet>
+        <ScriptProperty><Name>Time</Name><GetScriptBlock>[datetime]$this.Occurred</GetScriptBlock></ScriptProperty>
+    </Members>
+  </Type>
+  <Type><Name>OctopusFeed</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Name</Name>
+              <Name>FeedType</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptMethod><Name>Search</Name><Script>Param ([parameter(Mandatory=$true,position=1)]$SearchTerm) Invoke-OctopusMethod -PStype OctopusPackage -EndPoint ($this.links.packages + '?partialMatch=true&amp;packageid=' + $SearchTerm)</Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusLifeCycle</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Name</Name>
+              <Name>Description</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptMethod><Name>Projects</Name><Script>Invoke-OctopusMethod -PSType OctopusProject -EndPoint $this.Links.Projects</Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusLibraryVariableSet</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Name</Name>
+              <Name>Description</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+    <ScriptMethod><Name>Variables</Name><Script>
+        Invoke-OctopusMethod -PSType OctopusVariableSet -EndPoint $this.Links.variables
+
+    </Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusMachine</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Name</Name>
+              <Name>Description</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptMethod><Name>Connection</Name><Script>Invoke-OctopusMethod                     -EndPoint $this.Links.Connection</Script>                                       </ScriptMethod>
+      <ScriptMethod><Name>Tasks</Name>     <Script>Invoke-OctopusMethod -PsType OctopusTask -EndPoint ($this.Links.TasksTemplate -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusPackage</Name>
+    <Members>
+        <ScriptMethod><Name>RelatedSteps</Name><Script>
+            Get-OctopusProject | Where-Object {$_.DeploymentProcess().steps.actions.packages.where( {$_.packageID -eq $this.packageId -and $_.FeedId -eq $this.feedid })} | ForEach-Object {
+                $Projectname = $_.name
+                $_.DeploymentProcess().steps.actions | Where-Object {$_.packages.packageID -eq $this.packageId} |
+                    Select-Object @{n='Projectname';e={$Projectname}} ,Name, ActionType, CanBeUsedForProjectVersioning, IsDisabled, IsRequired
+            }
+        </Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusProject</Name>
+    <Members>
+        <ScriptProperty><Name>ProjectGroupName</Name><GetScriptBlock>Convert-OctopusID $this.ProjectGroupId</GetScriptBlock></ScriptProperty>
+        <ScriptMethod><Name>Channels</Name>          <Script>Invoke-OctopusMethod -PSType OctopusChannel            -EndPoint ($this.Links.Channels -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
+        <ScriptMethod><Name>DeploymentProcess</Name> <Script>
+                $Deployment =  Invoke-OctopusMethod -PSType OctopusDeploymentProcess  -EndPoint  $this.Links.DeploymentProcess
+                foreach ($s in $Deployment.Steps) {
+                    $s.pstypenames.add('OctopusDeploymentStep')
+                    foreach ($a in $s.actions) {
+                        $a.pstypenames.add('OctopusDeploymentAction')
+                        Add-Member   -InputObject $a           -NotePropertyName StepName    -NotePropertyValue $s.Name
+                        Add-Member   -InputObject $a           -NotePropertyName ProjectName -NotePropertyValue $this.name
+                        Add-Member   -InputObject $a           -NotePropertyName ProjectId   -NotePropertyValue $this.ID
+                        Add-Member   -InputObject $a           -NotePropertyName TargetRoles -NotePropertyValue $s.Properties.'Octopus.Action.TargetRoles'
+                    }
+                    Add-Member       -InputObject $s           -NotePropertyName ProjectName -NotePropertyValue $this.name
+                    Add-Member       -InputObject $s           -NotePropertyName ProjectId   -NotePropertyValue $this.ID
+                }
+                Add-Member -PassThru -InputObject $Deployment  -NotePropertyName ProjectName -NotePropertyValue $this.name
+        </Script></ScriptMethod>
+        <ScriptMethod><Name>Environments</Name>      <Script>
+        Invoke-OctopusMethod -PSType OctopusChannel            -EndPoint ($this.Links.Channels -replace '\{.*$','' ) -ExpandItems | ForEach-Object {
+                if    ($_.LifecycleId) {
+                      $lifecyclePreview = Invoke-Octopusmethod -endPoint "lifecycles/$($_.LifecycleId)/preview"
+                }
+                else {$lifecyclePreview = Invoke-Octopusmethod -endPoint "lifecycles/$($this.LifecycleId)/preview" }
+                      $lifecyclePreview.Phases.AutomaticDeploymentTargets
+                      $lifecyclePreview.Phases.OptionalDeploymentTargets
+            } | Sort-Object -Unique
+        </Script>                                                                                  </ScriptMethod>
+        <ScriptMethod><Name>DeploymentSettings</Name><Script>Invoke-OctopusMethod -PSType OctopusDeploymentSettings -EndPoint  $this.Links.DeploymentSettings</Script>                         </ScriptMethod>
+        <ScriptMethod><Name>Releases</Name>          <Script>Invoke-OctopusMethod -PSType OctopusRelease            -EndPoint ($this.Links.Releases -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
+        <ScriptMethod><Name>Runbooks</Name>          <Script>Invoke-OctopusMethod -PSType OctopusRunBook            -EndPoint ($this.Links.Runbooks -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
+        <ScriptMethod><Name>Triggers</Name>          <Script>Invoke-OctopusMethod                                   -EndPoint ($this.Links.Triggers -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
+        <ScriptMethod><Name>Variables</Name>         <Script>Invoke-OctopusMethod -PSType OctopusVariableSet        -EndPoint  $this.Links.Variables</Script>                                  </ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusProjectGroup</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Name</Name>
+              <Name>Description</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptMethod><Name>Projects</Name><Script>Invoke-OctopusMethod -PSType OctopusProject   -EndPoint  $this.Links.Projects  -ExpandItems</Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusRelease</Name>
+    <Members>
+        <ScriptMethod><Name>Artifacts</Name>  <Script>Invoke-OctopusMethod -PSType OctopusArtifact   -EndPoint  $this.Links.Artifacts  -ExpandItems</Script>                        </ScriptMethod>
+        <ScriptMethod><Name>Delete</Name>     <Script>Invoke-OctopusMethod -method Delete            -EndPoint ($this.Links.Self        -replace '\{.*$','' ) | Out-Null </Script>  </ScriptMethod>
+        <ScriptMethod><Name>Deployments</Name><Script>Invoke-OctopusMethod -PSType OctopusDeployment -EndPoint ($this.Links.Deployments -replace '\{.*$','' ) -ExpandItems</Script> </ScriptMethod>
+        <ScriptMethod><Name>Lifecycle</Name>  <Script>Invoke-OctopusMethod -PSType OctopusLifecycle  -EndPoint  $this.Links.Lifecycle</Script>                                      </ScriptMethod>
+        <ScriptMethod><Name>Progression</Name><Script>
+        Invoke-OctopusMethod                           -EndPoint  $this.Links.Progression | Select-Object -ExpandProperty Phases |
+        Add-Member -NotePropertyName ReleaseId -NotePropertyValue $rel.Id        -PassThru |
+        Add-Member -NotePropertyName ProjectID -NotePropertyValue $rel.ProjectId -PassThru |
+        ForEach-Object {$_.pstypenames.add('OctopusPhase'); $_}
+        </Script></ScriptMethod>
+        <ScriptMethod><Name>Project</Name>    <Script>Invoke-OctopusMethod -PSType OctopusProject    -EndPoint  $this.Links.Project</Script>                                            </ScriptMethod>
+        <ScriptProperty><Name>AssembledTime</Name><GetScriptBlock>[datetime]$this.Assembled</GetScriptBlock></ScriptProperty>
+        <ScriptProperty><Name>Progress</Name><GetScriptBlock>$this.Progression().foreach({"{0}: {1,-12}" -f  $_.name, $_.progress}) -join ''</GetScriptBlock></ScriptProperty>
+    </Members>
+  </Type>
+  <Type><Name>OctopusRunbookRun</Name>
+    <Members>
+     <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet><Name>DefaultDisplayPropertySet</Name><ReferencedProperties>
+            <Name>ID</Name>
+            <Name>RunbookSnapshotId</Name>
+            <Name>Name</Name>
+            <Name>DeployedBy</Name>
+            <Name>Created</Name>
+            <Name>TaskId</Name>
+          </ReferencedProperties></PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptProperty><Name>Created</Name><GetScriptBlock>[datetime]$this.Created</GetScriptBlock></ScriptProperty>
+      <ScriptMethod><Name>Delete</Name><Script>Invoke-OctopusMethod -EndPoint  $this.Links.Self -method Delete</Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusTask</Name>
+    <Members>
+        <ScriptMethod><Name>Artifacts</Name>        <Script>Invoke-OctopusMethod -PSType OctopusArtifact          -EndPoint  $this.Links.Artifacts -ExpandItems </Script>       </ScriptMethod>
+        <ScriptMethod><Name>Details</Name>          <Script>Invoke-OctopusMethod                                  -EndPoint ($this.Links.Details  -replace '\{.*$','' )</Script></ScriptMethod>
+        <ScriptMethod><Name>Raw</Name>              <Script>Invoke-OctopusMethod                                  -EndPoint  $this.Links.Raw</Script>                           </ScriptMethod>
+        <ScriptMethod><Name>Cancel</Name>           <Script>Invoke-OctopusMethod -PSType OctopusTask              -EndPoint  $this.Links.Cancel -method Post</Script>           </ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusTeam</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Name</Name>
+              <Name>Description</Name>
+              <Name>CanBeDeleted</Name>
+              <Name>CanBeRenamed</Name>
+              <Name>CanChangeRoles</Name>
+              <Name>CanChangeMembers</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+     <ScriptMethod><Name>Roles</Name><Script>Invoke-OctopusMethod -spaceid $Null          -EndPoint  ($this.Links.ScopedUserRoles -replace '\{.*$','' ) -ExpandItems | ForEach-Object {Invoke-OctopusMethod -PSType OctopusUserRole -EndPoint "userroles/$($_.UserRoleId)" -spaceid $null}</Script></ScriptMethod>
+    <ScriptMethod><Name>Users</Name><Script>$this.MemberUserIds | ForEach-Object {Invoke-OctopusMethod -PSType OctopusUser -spaceID $null -EndPoint "users/$_" }</Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusUsage</Name>
+    <Members>
+        <ScriptMethod><Name>Project</Name><Script>Invoke-OctopusMethod  -PSType OctopusProject -          EndPoint $this.Links.project </Script></ScriptMethod>
+        <ScriptMethod><Name>DeploymentProcess</Name><Script>Invoke-OctopusMethod  -PSType OctopusDeploymentProcess -EndPoint $this.Links.DeploymentProcess</Script></ScriptMethod>
+
+    </Members>
+  </Type>
+  <Type><Name>OctopusUser</Name>
+    <Members>
+      <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>UserName</Name>
+              <Name>DisplayName</Name>
+              <Name>EmailAddress</Name>
+              <Name>IsActive</Name>
+              <Name>IsService</Name>
+              <Name>IsRequestor</Name>
+              <Name>CanPasswordBeEditted</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptMethod><Name>Permissions</Name><Script>
+      $p = (Invoke-OctopusMethod  -EndPoint "$($j.links.self)/permissions").permissions ;
+      $p.psobject.Properties.name | sort-object |
+        foreach-object {$n = $_; $p.$n | select-object @{n='Name';e={$n}},*}  |
+            where-object {$_.RestrictedToEnvironmentIds -or $_.RestrictedToProjectGroupIds -or $_.RestrictedToProjectIds -or $_.RestrictedToTenantIds} |
+                foreach-object {$_.pstypeNames.add('OctopusPermission'); $_}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Spaces</Name><Script>
+      Invoke-OctopusMethod -PSType OctopusSpace       -EndPoint  $this.Links.Spaces
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Teams</Name><Script>
+        param ([switch]$includesystem,$spaces)
+        $endpoint =  $this.Links.Teams -replace "\{.*$","?IncludeSystem=$($includesystem -as [boolean])"
+        if ($Spaces -match '^spaces-\d+$') {$endpoint += "&amp;spaces=$space"}
+        elseif ($spaces)                   {$endpoint += "&amp;spaces=" + ( (Get-OctopusSpace $spaces).id -join ",")}
+        Invoke-OctopusMethod -PSType OctopusTeam        -EndPoint $endpoint -spaceId $null
+       </Script></ScriptMethod>
+    </Members>
+   </Type>
+   <Type><Name>OctopusWorkerPool</Name>
+    <Members>
+     <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet><Name>DefaultDisplayPropertySet</Name><ReferencedProperties>
+            <Name>ID</Name>
+            <Name>Name</Name>
+            <Name>Description</Name>
+            <Name>IsDefault</Name>
+             </ReferencedProperties></PropertySet>
+        </Members>
+      </MemberSet>
+     <ScriptMethod><Name>Workers</Name><Script>Invoke-OctopusMethod -PSType OctopusWorker -EndPoint($this.links.workers -replace '\{.*$','') -ExpandItems</Script></ScriptMethod>
+    </Members>
+  </Type>
+  <Type><Name>OctopusWorker</Name>
+    <Members>
+     <MemberSet><Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet><Name>DefaultDisplayPropertySet</Name><ReferencedProperties>
+            <Name>ID</Name>
+            <Name>Name</Name>
+            <Name>WorkerPoolIds</Name>
+            <Name>Status</Name>
+            <Name>IsDisabled</Name>
+            <Name>HealthStatus</Name>
+            <Name>IsInProcess</Name>
+          </ReferencedProperties></PropertySet>
+        </Members>
+      </MemberSet>
+     <ScriptMethod><Name>Connection</Name><Script>Invoke-OctopusMethod  -EndPoint $this.links.Connection</Script></ScriptMethod>
+    </Members>
+  </Type>
+</Types>
