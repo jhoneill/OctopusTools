@@ -151,7 +151,7 @@ param (
     process {
         if (-not $JsonText) {
             $r = (Resolve-Path $Path)
-            if     ($r)             {Write-Warning "Could not find $Path" ; return}
+            if     (-not $r)        {Write-Warning "Could not find $Path" ; return}
             elseif ($r.count -gt 1) {Write-Warning   "$Path matches more than one file." ; return}
             else                    {$JsonText = Get-Content -Raw $Path}
         }

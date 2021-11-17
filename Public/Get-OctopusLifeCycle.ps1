@@ -22,7 +22,8 @@ function Get-OctopusLifeCycle               {
     )
     process {
         $item = Get-Octopus -Kind lifecycle -key $Lifecycle
-        if      ($Projects) {$item.Projects() }
+        if     (-not $item) {return}
+        elseif ($Projects)  {$item.Projects() }
         else    {
             foreach ($p in $item.phases ) {
                 $p.pstypenames.Add('OctopusLifecyclePhase')

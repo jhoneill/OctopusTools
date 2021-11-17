@@ -21,9 +21,10 @@ function Get-OctopusTeam                    {
                  $item   = Invoke-OctopusMethod -PSType OctopusTeam -EndPoint "teams/$Team" -SpaceId $null
         }
         else    {$item   = Invoke-OctopusMethod -PSType OctopusTeam -EndPoint Teams -ExpandItems -Name $Team -SpaceId $null | Sort-Object -Property name}
-        if      ($Roles)       {$item.Roles()}
+        if      (-not $item)   {return}
+        elseif  ($Roles)       {$item.Roles()}
         elseif  ($ExpandUsers) {$item.Users()}
-        else                   {$item  }
+        else                   {$item}
     }
 }
 ## https://Octopus.com/docs/Octopus-rest-api/examples/users-and-teams
@@ -59,7 +60,8 @@ function Get-OctopusUser                    {
             $item = Invoke-OctopusMethod -PSType OctopusUser 'users'   -spaceId $null -ExpandItems |
                      Where-Object {$_.UserName -like $u -or $_.DisplayName -like $u -or $_.id -eq $u}
         }
-        if     ($Teams)       {$item.Teams($true)}
+        if     (-not $item)   {return}
+        elseif ($Teams)       {$item.Teams($true)}
         elseif ($Spaces)      {$item.Spaces() }
         elseif ($Permissions) {$item.Permissions()}
         else   {$item}

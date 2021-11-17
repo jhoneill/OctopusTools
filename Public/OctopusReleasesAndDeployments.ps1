@@ -81,7 +81,8 @@ function Get-OctopusRelease                 {
             return
         }
         $item = Invoke-OctopusMethod -PStype OctopusRelease -EndPoint "releases/$Release"
-        if     ($Artifacts)   { $item.Artifacts()   }
+        if     (-not $item)   {return}
+        elseif ($Artifacts)   { $item.Artifacts()   }
         elseif ($Deployments) { $item.Deployments() }
         elseif ($LifeCycle)   { $item.LifeCycle()   }
         elseif ($Phases)      { $item.Progression() }
@@ -219,12 +220,13 @@ Get-OctopusDeployment  Deployments-82  -DeploymentProcess | % steps | % actions 
             return
         }
         $item = Invoke-OctopusMethod -PSType OctopusDeployment -EndPoint "deployments/$Deployment"
-        if     ($Artifacts){$item.Artifacts()}
-        elseif ($Process)  {$item.DeploymentProcess()}
-        elseif ($Project)  {$item.Project()}
-        elseif ($Release)  {$item.Release() }
-        elseif ($Task)     {$item.Task() }
-        else               {$item}
+        if     (-not $item) {return}
+        elseif ($Artifacts) {$item.Artifacts()}
+        elseif ($Process)   {$item.DeploymentProcess()}
+        elseif ($Project)   {$item.Project()}
+        elseif ($Release)   {$item.Release() }
+        elseif ($Task)      {$item.Task() }
+        else                {$item}
     }
 }
 
@@ -291,7 +293,8 @@ function Get-OctopusTask                    {
         }
         $item = Invoke-OctopusMethod -PSType OctopusTask -EndPoint "tasks/$Task"
 
-        if     ($Artifacts) {$item.Artifacts()}
+        if     (-not $item) {return}
+        elseif ($Artifacts) {$item.Artifacts()}
         elseif ($Details)   {$item.Details()}
         elseif ($Raw)       {$item.Raw() }
         else                {$item}

@@ -39,7 +39,8 @@ General notes
     )
     process {
         $item = Get-Octopus -Kind ProjectGroup -key $ProjectGroup -ExtraId ProjectGroupId
-        if     ($Projects)  {$item.Projects()}
+        if     (-not $item) {return}
+        elseif ($Projects)  {$item.Projects()}
         else   {$item}
     }
 }

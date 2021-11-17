@@ -134,12 +134,13 @@ Get-OctopusPackage PowerShellScripts -AllVersions
         }
         else   {Write-Warning "Could not make sense of the supplied package and/or feed parameter"}
 
-        if ($version -or $AllVersions) {
+        if     (-not $item) {return}
+        elseif ($version -or $AllVersions) {
                 $item = $item.allVersions()
                 if ($version)  {$item = $item | Where-Object {$_.version -like $Version}}
         }
-        if (-not $Destination) {return $item }
-        else  { #if we have a destination directory download the package
+        if     (-not $Destination) {return $item }
+        else   { #if we have a destination directory download the package
             if (-not (Test-path -PathType Container -Path $Destination)) {
                 throw "$Destination is not a valid directory"
             }

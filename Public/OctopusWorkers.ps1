@@ -12,8 +12,9 @@ function Get-OctopusWorkerPool              {
     )
     process {
         $item = Get-Octopus -Kind WorkerPool -Key $WorkerPool
-        if      ($Workers) {$item.workers()}
-        else               {$item}
+        if     (-not $item) {return}
+        elseif ($Workers)   {$item.workers()}
+        else                {$item}
     }
 }
 
@@ -30,8 +31,9 @@ function Get-OctopusWorker                  {
     )
     process {
         $item = Get-Octopus -Kind Worker -key $Worker
-         if     ($Connection) {$item.Connection()}
-         else                 {$item}
+        if     (-not $item)  {return}
+        elseif ($Connection) {$item.Connection()}
+        else                 {$item}
     }
 }
 

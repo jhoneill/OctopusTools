@@ -45,7 +45,8 @@ function Get-OctopusLibraryVariableSet      {
         $item = Get-Octopus -Kind LibraryVariableSet -Key $LibraryVariableSet |
                         Where-Object ContentType -eq 'Variables' |
                             Sort-Object -Property name
-         if      ($Variables) {$item.Variables()}
-         else    {$item }
+         if     (-not $item) {return}
+         elseif ($Variables) {$item.Variables()}
+         else                {$item }
     }
 }

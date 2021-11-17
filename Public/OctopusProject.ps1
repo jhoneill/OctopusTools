@@ -52,7 +52,8 @@ function Get-OctopusProject                 {
     process {
         $item = Get-Octopus -Kind Project -Key $Project -ExtraId ProjectID | Sort-Object -Property ProjectGroupName,Name
         #xxxx todo Some types still to add for these methods in the types.ps1mxl file
-        if      ($PSCmdlet.ParameterSetName -eq 'Default') {$item}
+        if      (-not $item)                               {return}
+        elseif  ($PSCmdlet.ParameterSetName -eq 'Default') {$item}
         elseif  ($Channels)           {$item.Channels()}
         elseif  ($DeploymentProcess)  {$item.DeploymentProcess()}
         elseif  ($DeploymentSettings) {$item.DeploymentSettings()}
@@ -120,7 +121,7 @@ function New-OctopusProject                 {
     }
 }
 
-function Add-OctopusProjectDeploymentStep   {
+function Copy-OctopusProjectStep            {
 <#
  $p         = Get-OctopusProject -Name "Test Project 77"
 $newport    = "1001"
@@ -129,173 +130,168 @@ $p.DeploymentProcess().steps[0] | Add-OctopusProjectDeploymentStep  'Test Projec
             $NewStep.Actions[0].Name = $NewStep.Name; $NewStep.Actions[0].Properties.Port = $newport; $NewStep.Actions[0].Properties.ServiceName =  $newservice
 }
 #>
+    [cmdletbinding(DefaultParameterSetName='ByProjectName')]
     param (
-        [Parameter(Mandatory=$true,Position=0)]
+        [Parameter(Mandatory=$false, ParameterSetName='PipedAndProject',    Position=0 )]
+        [Parameter(Mandatory=$true,  ParameterSetName='ByProjectName', Position=0 )]
         [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project,
-        [Parameter(Mandatory=$true,Position=1)]
-        [string]$NewStepName,
 
-        [Parameter(ValueFromPipeline=$true,Mandatory=$true,Position=3)]
+        [Parameter(Mandatory=$false, ParameterSetName='PipedAndProcess')]
+        [Parameter(Mandatory=$true,  ParameterSetName='ByProcess')]
+        $Process,
+
+        [Parameter(Mandatory=$false, ParameterSetName='PipedAndStep')]
+        [Parameter(Mandatory=$true,  ParameterSetName='ByProjectName',  Position=1)]
+        [Parameter(Mandatory=$true,  ParameterSetName='ByProcess',      Position=1)]
         $SourceStep,
 
-        [Parameter(Position=4)] # Mandatory=$true,
-        $UpdateScript
-    )
-    process {
-        $process             = Get-OctopusProject -Name $Project -DeploymentProcess
-        $actionCount         = 0
-        #we need to use $psobject.copy() to avoid changing the original source
-        $process.Steps      += $SourceStep.psobject.Copy()
-        $NewStep             = $process.steps[-1]
-        $NewStep.id          = [guid]::NewGuid().tostring()
-        $NewStep.Name        = $newStepName
-        $NewStep.Actions     = @($SourceStep.Actions.foreach({ $_.psobject.Copy() })  )
-        $NewStep.Actions     | ForEach-Object {
-            $_.id            = [guid]::NewGuid().tostring()
-            $_.Properties    =   $SourceStep.Actions[$actionCount].Properties.psobject.Copy()
-            $_.Packages      = @($SourceStep.Actions[$actionCount].Packages.foreach({ $_.psobject.Copy() }) )
-            foreach ( $p    in   $_.Packages) {
-                    $p.id  = [guid]::NewGuid().tostring()
-            }
-        }
+        [Parameter(Mandatory=$true, ParameterSetName='PipedAndProject',ValueFromPipeline=$true)]
+        [Parameter(Mandatory=$true, ParameterSetName='PipedAndProcess',ValueFromPipeline=$true)]
+        [Parameter(Mandatory=$true, ParameterSetName='PipedAndStep',ValueFromPipeline=$true)]
+        $InputObject,
 
-        if  ($UpdateScript -is [scriptblock]) { #re-hcreate the script block otherwise variables from this function are out of scope.
-            & ([scriptblock]::create( $UpdateScript ))
-        }
+        [Parameter(Position=2)]
+        $NewStepName,
 
-        Update-OctopusObject $process -Force:$force
-    }
-}
-#need equivalent for runbooks
+        [Parameter(Position=3)]
+        [hashtable]$NewActionParameters,
 
-Function Export-OctopusProject              {
-    param (
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
-        [object[]]$Project,
-        $ZipFilePwd = "DontTellany1!",
-        $ZipDestination,
-        $TimeOut=300
-    )
-    begin {
-        if ((Invoke-OctopusMethod api).version -lt [version]::new(2021,1)) {
-            throw "This requires at least version 2021.1 of Octopus Deploy"
-        }
-        if ($PSBoundParameters['$ZipFilePwd'] -and -not $ZipDestination) {$ZipDestination = $pwd}
-        elseif ($ZipDestination -and -not (Test-Path -PathType Container $ZipDestination)) {
-            throw 'FileDestination should be a directory'
-        }
-    }
-    process {
-        $Body = @{
-            IncludedProjectIds = @();
-            Password           = @{HasValue = $True; NewValue = $ZipFilePwd; }
-        }
-        foreach     ($p in $project) {
-            if      ($p.id ) {$body.IncludedProjectIds += $p.Id}
-            elseif  ($p -is [string] -and $p -match "^projects-\d+$") {$Body.IncludedProjectIds += $p}
-            else    {$Body.IncludedProjectIds += (Get-OctopusProject $p ).id }
-        }
+        [Parameter(Position=4)]
+        $RoleReplace,
 
-        $startTime        = [datetime]::now
-        $exportServerTask = Invoke-OctopusMethod -EndPoint "/projects/import-export/export" -Method Post -Item $body
+        [Parameter(Position=5)]
+        [scriptblock]$UpdateScript,
 
-        if     (-not $ZipDestination ) {
-            Write-Progress -Activity "Waiting for server task to complete" -Completed
-            return {Get-OctopusTask $exportServerTask.TaskId}
-        }
-        #else ...
-        do     {
-            $t = Get-OctopusTask $exportServerTask.TaskId
-            if ($t.State  -eq "Success") {
-                $t.Artifacts() | Where-Object filename -like "*.zip" | ForEach-Object {$_.download($ZipDestination)}
-            }
-            elseif (-not $t.IsCompleted) {
-                Write-Progress -Activity "Waiting for server task to complete" -SecondsRemaining ($startTime.AddSeconds($TimeOut).Subtract([datetime]::now).seconds) -Status $t.State
-            }
-        }
-        While  ((-not $t.IsCompleted) -and [datetime]::now.Subtract($startTime).totalseconds -lt $TimeOut -and
-                (-not (start-sleep -Seconds 5))   #Sneaky trick. This waits for 5 seconds and returs true. So we only wait if we're going to go round again.
-                )
-        if     ( -not $t.IsCompleted) {
-                Write-warning "Task Timed out. Cancelling"
-                Write-Progress -Activity "Waiting for server task to complete" -SecondsRemaining 0 -Status $t.State
-                $null = Invoke-OctopusMethod  -EndPoint $t.Links.Cancel -Method post
-        }
-        elseif ($t.State -ne "Success") {
-                Write-warning "Task completed with Status of $($t.State)"
-        }
-        Write-Progress -Activity "Waiting for server task to complete" -Completed
-    }
-}
-
-function Export-OctopusDeploymentProcess    {
-    <#
-    .SYNOPSIS
-        Exports one or more custom action-templates
-
-    .PARAMETER Project
-        One or project either passed as an object or a name or project ID. Accepts input from the pipeline
-
-    .PARAMETER Destination
-        The file name or directory to use to create the JSON file. If a directory is given the file name will be "tempaltename.Json". If nothing is specified the files will be output to the current directory.
-
-    .PARAMETER PassThru
-        If specified the newly created files will be returned.
-
-    .PARAMETER Force
-        By default the file will not be overwritten if it exists, specifying -Force ensures it will be.
-
-    .EXAMPLE
-        C:> Export-OctopusDeploymentProcess banana* -pt
-        Exports the process from each project with a name starting "banana" to its own file in the current folder.
-        The files will be named  deploymentprocess-Projects-XYZ.json  where XYX is the project ID number.
-    #>
-    param (
-        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true)]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
-        $Project,
-
-        [Parameter(Position=1)]
-        $Destination = $pwd,
-
-        [Alias('PT')]
-        [switch]$PassThru,
+        [switch]$Apply,
 
         [switch]$Force
     )
-
+    begin   { #check parameters have the right types, and get project's deployment process if need be
+        if     ($NewStepName   -and       $NewStepName -isnot [string] -and $NewStepName -isnot [scriptblock]) {
+                throw 'The new step name must be a string or a scriptblock'
+        }
+        if     ($SourceStep    -and       $SourceStep.pstypenames  -notcontains    'OctopusDeploymentStep') {
+                 throw 'SourceStep is not valid, it must be a step from an existing process.'
+        }
+        elseif ($Process       -and       $Process.pstypenames     -notcontains    'OctopusDeploymentProcess') {
+                throw 'Process is not valid, it must be an existing deployment process.'
+        }
+        elseif (-not $Process  -and       $Project.pstypenames     -contains       'OctopusProject' ) {
+                     $Process  = $Project.DeploymentProcess()
+        }
+        elseif ($Project       -and -not  $Process) {
+                $Process = Get-OctopusProject -Project $Project -DeploymentProcess
+                if (-not $Process) {throw 'Project is not valid, it must be or resolve to an existing project' }
+        }
+    }
     process {
-        if ($Project.Name -and $Project.DeploymentProcess ) {
-            $name        = $Project.Name
-            $process    = $Project.DeploymentProcess()
+        #region  figure out what to do with piped input we should get to a process and the step going into it
+        $outputAtEnd           = $false  # Have steps been piped in with a single process having multiple updates ?
+        if     ($InputObject   -and -not ($InputObject.pstypenames.where({$_ -in @('OctopusProject','OctopusDeploymentStep','OctopusDeploymentProcess')}))) {
+                Write-Warning 'Input object is not valid it must be a project, a deployment step, or a Deployment process' ; Return
         }
-        else {
-            $process    = Get-OctopusProject -Name $Project -DeploymentProcess
-            if ($process.count -gt 1)  {
-                $process.ProjectId | Export-OctopusDeploymentProcess -Destination $Destination -PassThru:$PassThru -Force:$Force
-                return
+        elseif ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusProject') {
+            if   ($PSBoundParameters.Process -or $PSBoundParameters.Project)  {
+                  Write-Warning 'Input object cannot be a project when a project or process is specified' ; Return}
+            else {$Process     = $InputObject.DeploymentProcess()}
+        }
+        elseif ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusDeploymentProcess') {
+            if   ($PSBoundParameters.Process -or $PSBoundParameters.Project) {
+                  Write-Warning 'Input object cannot be a deployment process when a project or process is specified' ; Return
+        }
+            else {$Process = $InputObject}
+        }
+        elseif ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusDeploymentStep') {
+            if   ($PSBoundParameters.SourceStep)  {Write-Warning 'Input object cannot be a deployment step when a step parameter is specified' ; Return}
+            else {
+                  $SourceStep   = $InputObject
+                  $outputAtEnd = $true
             }
-            else {$name = $process.Id}
         }
-        $Steps   = @()
-        foreach ($SourceStep in $process.Steps) {
-            $newstep        = $SourceStep.psobject.copy()
-            $newstep.Id     = $null
-            $newstep.Actions = @($SourceStep.Actions.ForEach({$_.psobject.copy()}))
-            foreach ($a in $newstep.Actions) {
-                        $a.id       = $null
-                        $a.packages = @($_.packages.foreach({$_.psobject.copy()}))
-                        $a.packages.foreach({$_.id = $null  })
+
+        if     (-not ($Process -and $SourceStep)) {
+            Write-warning "You must supply a project or its process, and a source step either as parameters or via the pipeline" ; return
+        }
+        #endregion
+
+        #we need to use select and/or $psobject.copy() to avoid changing the original source
+        #We also need to remove some of the properties added to actions and steps to make them nicer
+        $process.Steps        += $SourceStep  | Select-Object -Property * -ExcludeProperty 'ProjectId','ProjectName'
+        $newStep               = $process.steps[-1]
+        if     ($NewStepName -is [string])       { $newStep.Name = $NewStepName}
+        elseif ($NewStepName -is [scriptblock])  {
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = "Var used in scriptblock passed as param")]
+                $name = $newStep.Name  # for use in the script block
+                #re-create the script block otherwise variables from this function are out of scope.
+                $newstep.name = & ([scriptblock]::create( $NewStepName ))
+        }
+        Write-Verbose "New step: $($newStep.Name) - source was $($SourceStep.Name)."
+        if ($RoleReplace.count -eq 2 -and $newStep.Properties.'Octopus.Action.TargetRoles') {
+                $newStep.Properties = $newStep.Properties.psobject.Copy()
+                $newStep.Properties.'Octopus.Action.TargetRoles' = $newStep.Properties.'Octopus.Action.TargetRoles'  -replace $RoleReplace
+                Write-verbose "    Step target-roles = $($newStep.Properties.'Octopus.Action.TargetRoles'), was '$($SourceStep.Properties.'Octopus.Action.TargetRoles')'."
+        }
+
+        $newStep.pstypeNames.add('OctopusDeploymentStep')
+        $newStep.id            = [guid]::NewGuid().tostring()
+        $actionCount           = 0
+        $newStep.Actions       = @($SourceStep.Actions  | Select-Object -Property * -ExcludeProperty 'ProjectId','ProjectName','StepName'  )
+        $newStep.Actions       | ForEach-Object {
+            if ($NewStepName -is [string] -and $newstep.Actions.count -eq 1) {
+                $_.Name = $NewStepName
             }
-            $steps += $newstep
+            elseif ($NewStepName -is [string])      {
+                Write-Warning "Cannot use '$NewStepName' as the name for multiple actions."
+            }
+            elseif ($NewStepName -is [scriptblock]) {
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = "Var used in scriptblock passed as param")]
+                $name = $_.Name  # for use in the script block
+                #re-create the script block otherwise variables from this function are out of scope.
+                $_.name = & ([scriptblock]::create( $NewStepName ))
+            }
+            Write-Verbose "    Action $($_.name) - was $($SourceStep.Actions[$actionCount].Name)."
+            $_.pstypeNames.add('OctopusDeploymentAction')
+            $_.id            = [guid]::NewGuid().tostring()
+            $_.Properties    =   $SourceStep.Actions[$actionCount].Properties.psobject.Copy()
+            $_.Packages      = @($SourceStep.Actions[$actionCount].Packages.foreach({ $_.psobject.Copy() }) )
+            foreach ( $p     in  $_.Packages) {
+                      $p.id  = [guid]::NewGuid().tostring()
+            }
+            foreach ($k in $NewActionParameters.Keys) {
+                if ($_.properties.$k) {
+                    $_.properties.$k = $NewActionParameters.$k
+                    Write-verbose "        Property '$k' = $($_.properties.$k)"
+                }
+            }
+            if ($RoleReplace.count -eq 2 -and $_.TargetRoles) {
+                $_.TargetRoles = $_.TargetRoles -replace $RoleReplace
+                Write-verbose "        Action target-roles = $($_.TargetRoles), was '$($SourceStep.Actions[$actionCount].TargetRoles)'."
+            }
+            $actionCount ++
         }
-        if     (Test-Path $Destination -PathType Container )    {$DestPath = (Join-Path $Destination $name) + '.json' }
-        elseif (Test-Path $Destination -IsValid -PathType Leaf) {$DestPath = $Destination}
-        else   {Write-Warning "Invalid destination" ;return}
-        ConvertTo-Json $Steps -Depth 10 | Out-File $DestPath -NoClobber:(-not $Force)
-        if     ($PassThru) {Get-Item $DestPath}
+
+        if     ($UpdateScript) { & ([scriptblock]::create( $UpdateScript )) }
+
+        if     (-not ($outputAtEnd -or $Force -or $Apply))   {$Process}
+        elseif (-not  $outputAtEnd) {
+            $Process.Steps = @($Process.Steps   | Select-Object -Property * -ExcludeProperty 'ProjectId','ProjectName')
+            foreach ($s      in $Process.steps) {
+                $s.Actions = @($S.Actions       | Select-Object -Property * -ExcludeProperty 'ProjectId','ProjectName','StepName')
+            }
+            Update-OctopusObject $Process -Force:$force
+        }
+        else {  Write-Verbose "Step completed."}
+    }
+    end {
+        if     ($outputAtEnd -and -not ($Force -or $Apply)) {$Process}
+        elseif ($outputAtEnd) {
+            $Process.Steps = @($Process.Steps   | Select-Object -Property * -ExcludeProperty 'ProjectId','ProjectName')
+            foreach ($s      in $Process.steps) {
+                $s.Actions = @($S.Actions       | Select-Object -Property * -ExcludeProperty 'ProjectId','ProjectName','StepName')
+            }
+            Update-OctopusObject $Process -Force:$force
+        }
     }
 }
-# to do . Import ! You don't know if the export is good or bad until you import. morning Mr Schrodinger
+#need equivalent for runbooks

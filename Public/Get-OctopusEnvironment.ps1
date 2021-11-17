@@ -33,7 +33,8 @@ function Get-OctopusEnvironment             {
     )
     process {
         $item = Get-Octopus -Kind Environment -Key $Environment |Sort-Object -Property sortOrder
-        if     ($Machines)  {$item.machines() }
+        if     (-not $item) {return}
+        elseif ($Machines)  {$item.machines() }
         else                {$item }
     }
 }

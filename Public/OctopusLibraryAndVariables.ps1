@@ -34,7 +34,7 @@ function Get-OctopusLibraryScriptModule     {
     }
 }
 
-function  New-OctopusLibraryScriptModule    {
+function New-OctopusLibraryScriptModule     {
     [Alias('New-OctopusScriptModule')]
     param   (
         [Parameter(Mandatory=$true,  Position=0,ValueFromPipelineByPropertyName=$true)]
@@ -65,10 +65,11 @@ function  New-OctopusLibraryScriptModule    {
     $result
 }
 
-function Set-OctopusVariable                {
+function Set-OctopusVariableSetMember      {
 <#
-    import-csv foo.csv |  select -ExcludeProperty IsSensitive -Property *, @{n='IsSensitive';e={$_.IsSensitive.toString -match "true|[1-9]" }} |  Set-OctopusVariable -VariableSet $variableset
+    import-csv foo.csv |  select -ExcludeProperty IsSensitive -Property *, @{n='IsSensitive';e={$_.IsSensitive.toString -match "true|[1-9]" }} |  Set-OctopusVariableSetMember -VariableSet $variableset
 #>
+    [alias('sov')]
     [CmdletBinding(SupportsShouldProcess=$true,DefaultParameterSetName='Default')]
     param   (
         [Parameter(Mandatory=$true,Position=0,ParameterSetName='Default')]
@@ -114,7 +115,7 @@ function Set-OctopusVariable                {
     begin   {
         #region ensure we have the variables and scopes (not their parent or the ID for them) before we proceed
         #We may have been given the name or the ID for a project or for a library variable set.
-        if         ($Project)            {$VariableSet = Get-OctopusProject             -Variables  -Project $Project }
+        if         ($Project)            {$VariableSet = Get-OctopusProject             -Variables -Project $Project }
         elseif     ($LibraryVariableSet) {$VariableSet = Get-OctopusLibraryVariableSet  -Variables -LibraryVariableSet $LibraryVariableSet}
         #If not we may we got the parent of the set object or its ID,
         if  ( -not ($VariableSet.id  -and $VariableSet.OwnerId -and $VariableSet.ScopeValues -and $VariableSet.Variables)) {
@@ -248,7 +249,6 @@ function Set-OctopusVariable                {
                 Write-Verbose "Removed $($varsBefore - $VariableSet.Variables.Count) variable(s)."
             }
             $VariableSet.Variables += $varsToAdd
-            $changes               += $varsToAdd.Count
         }
         Write-Verbose "Updated variable set contains $($VariableSet.Variables.Count) variable(s), with $changes new value(s) and $skipped item(s) skipped."
         if ($changes -and ($Force -or $PSCmdlet.ShouldProcess($VariableSet.Id,"Apply $changes variable updates"))) {
@@ -314,7 +314,6 @@ function Remove-OctopusVariable             {
         }
     }
 }
-
 
 function New-OctopusLibraryVariableSet      {
     [cmdletbinding(SupportsShouldProcess=$true)]
@@ -503,7 +502,7 @@ function Import-OctopusVariableSetFromCSV   {
                 #endregion
 
                 Write-Verbose "Updating VariableSet '$($VariableSet.ID)' from '$Path'"
-                $_.group | Set-OctopusVariable -VariableSet $VariableSet
+                $_.group | Set-OctopusVariableSetMember -VariableSet $VariableSet
             }
     }
 }
@@ -573,7 +572,7 @@ function Import-OctopusVariableSetFromXLSX  {
                 #endregion
                 Write-Progress -Activity "Importing from worksheet $($ws.name)" -Status "Updating VariableSet for '$($VariableSet.OwnerId)'"
                 Write-Verbose "Updating VariableSet '$($VariableSet.ID)' from worksheet '$($ws.name)'"
-                $result = $_.group | Set-OctopusVariable -VariableSet $VariableSet -PassThru
+                $result = $_.group | Set-OctopusVariableSetMember -VariableSet $VariableSet -PassThru
                 if (-not $result) {Write-Warning "--NO UPDATES WERE MADE--"}
                 #region If we're making an artifact export the 'After' state
                 if (-not $NoArtifact) {

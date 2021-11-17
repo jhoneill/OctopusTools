@@ -8,6 +8,6 @@
     <description>PowerShellScripts</description>
   </metadata>
   <files>
-    <file src="./PowerShellScripts/*" target="/PowerShellScripts" />
+    <file src=".\PowerShellScripts\*" target="\PowerShellScripts" />
   </files>
 </package>
