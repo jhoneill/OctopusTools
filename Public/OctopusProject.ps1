@@ -28,9 +28,11 @@ function Get-OctopusProject                 {
         [switch]$Channels,
 
         [Parameter(ParameterSetName='DeploymentProcess', Mandatory=$true)]
+        [Alias('DP')]
         [switch]$DeploymentProcess,
 
         [Parameter(ParameterSetName='DeploymentSettings',Mandatory=$true)]
+        [Alias('DS')]
         [switch]$DeploymentSettings,
 
         [Parameter(ParameterSetName='AllReleases',       Mandatory=$true)]
@@ -38,9 +40,10 @@ function Get-OctopusProject                 {
         [switch]$Releases,
 
         [Parameter(ParameterSetName='ReleaseVersion',    Mandatory=$true)]
+        [Alias('RV')]
         $ReleaseVersion,
-
         [Parameter(ParameterSetName='Runbooks',          Mandatory=$true)]
+        [Alias('RB')]
         [switch]$Runbooks,
 
         [Parameter(ParameterSetName='Triggers',          Mandatory=$true)]
@@ -49,22 +52,6 @@ function Get-OctopusProject                 {
         [Parameter(ParameterSetName='Variables',         Mandatory=$true)]
         [switch]$Variables
     )
-    process {
-        $item = Get-Octopus -Kind Project -Key $Project -ExtraId ProjectID | Sort-Object -Property ProjectGroupName,Name
-        #xxxx todo Some types still to add for these methods in the types.ps1mxl file
-        if      (-not $item)                               {return}
-        elseif  ($PSCmdlet.ParameterSetName -eq 'Default') {$item}
-        elseif  ($Channels)           {$item.Channels()}
-        elseif  ($DeploymentProcess)  {$item.DeploymentProcess()}
-        elseif  ($DeploymentSettings) {$item.DeploymentSettings()}
-        elseif  ($Runbooks)           {$item.Runbooks()}
-        elseif  ($Triggers)           {$item.Triggers()}
-        elseif  ($Variables)          {$item.Variables()}
-        elseif  ($ReleaseVersion)     {$item.Releases()   | Where-Object {$_.version -like $ReleaseVersion} }
-        else                          {$item.Releases() }
-    }
-}
-
 function New-OctopusProject                 {
     [cmdletbinding(SupportsShouldProcess=$true)]
     param (
@@ -74,16 +61,23 @@ function New-OctopusProject                 {
         [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Description,
 
-        [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         $ProjectGroup,
 
-        [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [ArgumentCompleter([OptopusGenericNamesCompleter])]
-        $LifeCycle
+        [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        $LifeCycle,
+
+        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
+        [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        $LibraryVariableSets,
+
+        [ArgumentCompleter([OptopusLibScriptModulesCompleter])]
+        [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        $ScriptModules
     )
     <# xxxx todo  Look at adding these properties
-        IncludedLibraryVariableSetIds
         DiscreteChannelRelease
         DefaultToSkipIfAlreadyInstalled
         TenantedDeploymentMode
@@ -100,14 +94,14 @@ function New-OctopusProject                 {
         if     (-not $ProjectGroup)    {$ProjectGroup = Get-OctopusProjectGroup | Select-Object -First 1 -ExpandProperty Id}
         elseif      ($ProjectGroup.id) {$ProjectGroup = $ProjectGroup}
         elseif      ($ProjectGroup -notmatch '^ProjectGroups-\d+$') {
-                    $ProjectGroup = (Get-OctopusProjectGroup $ProjectGroup).id
-                    if (-not $ProjectGroup) {throw 'Could not resolve the project group provided'}
+                     $ProjectGroup = (Get-OctopusProjectGroup $ProjectGroup).id
+                     if (-not $ProjectGroup) {throw 'Could not resolve the project group provided.'}
         }
         if     (-not $LifeCycle)       {$LifeCycle = Get-OctopusLifeCycle| Select-Object -First 1 -ExpandProperty Id}
         elseif      ($LifeCycle.id)    {$LifeCycle = $LifeCycle.id}
         elseif      ($LifeCycle -notmatch '^Lifecycles-\d+$') {
                      $LifeCycle = (Get-OctopusLifeCycle $LifeCycle).id
-                     if (-not $LifeCycle) {throw 'Could not resolve the lifecycle provided'}
+                     if (-not $LifeCycle) {throw 'Could not resolve the lifecycle provided.'}
         }
         $ProjectDefinition  = @{
             Name            = $Name
@@ -115,6 +109,30 @@ function New-OctopusProject                 {
             ProjectGroupId  = $ProjectGroup
             LifeCycleId     = $LifeCycle
         }
+        $setIds             = @()
+        if ($LibraryVariableSets) {
+            foreach ($set in $LibraryVariableSets) {
+                if      ($set.id)                                 {$setIds += $set.id}
+                elseif  ($set -match '^LibraryVariableSets-\d+$') {$setIds += $set}
+                else    {
+                        $set = (Get-OctopusLibraryVariableSet $set ).id
+                        if (-not $set) {throw 'Could not resolve the Library Variable Set provided'}
+                        else {$setIds += $set}
+                }
+            }
+        }
+        if ($ScriptModules)       { #script modules are special variable sets and added to the same IncludedLibraryVariableSetIds section
+            foreach ($module in $ScriptModules) {
+                if      ($module.id)                                 {$setIds += $module.id}
+                elseif  ($module -match '^LibraryVariableSets-\d+$') {$setIds += $module}
+                else    {
+                        $module = (Get-OctopusLibraryScriptModule $module ).id
+                        if (-not $module) {throw 'Could not resolve the Script module provided'}
+                        else {$setIds += $module}
+                }
+            }
+        }
+        if ($setIds.count -ge 1)  {$ProjectDefinition['IncludedLibraryVariableSetIds'] = $SetIds }
         if ($Force -or $pscmdlet.ShouldProcess($Name,'Create new project')) {
             Invoke-OctopusMethod -PSType OctopusProject -EndPoint 'Projects' -Method Post -Item $ProjectDefinition
         }
@@ -163,6 +181,9 @@ $p.DeploymentProcess().steps[0] | Add-OctopusProjectDeploymentStep  'Test Projec
         [Parameter(Position=5)]
         [scriptblock]$UpdateScript,
 
+        [Parameter(Position=6)]
+        $ExcludeEnvironmentIDs,
+
         [switch]$Apply,
 
         [switch]$Force
@@ -205,7 +226,7 @@ $p.DeploymentProcess().steps[0] | Add-OctopusProjectDeploymentStep  'Test Projec
         elseif ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusDeploymentStep') {
             if   ($PSBoundParameters.SourceStep)  {Write-Warning 'Input object cannot be a deployment step when a step parameter is specified' ; Return}
             else {
-                  $SourceStep   = $InputObject
+                  $SourceStep  = $InputObject
                   $outputAtEnd = $true
             }
         }
@@ -226,11 +247,11 @@ $p.DeploymentProcess().steps[0] | Add-OctopusProjectDeploymentStep  'Test Projec
                 #re-create the script block otherwise variables from this function are out of scope.
                 $newstep.name = & ([scriptblock]::create( $NewStepName ))
         }
-        Write-Verbose "New step: $($newStep.Name) - source was $($SourceStep.Name)."
+        Write-Verbose "New step:   '$($newStep.Name)' - source name was '$($SourceStep.Name)''."
         if ($RoleReplace.count -eq 2 -and $newStep.Properties.'Octopus.Action.TargetRoles') {
                 $newStep.Properties = $newStep.Properties.psobject.Copy()
                 $newStep.Properties.'Octopus.Action.TargetRoles' = $newStep.Properties.'Octopus.Action.TargetRoles'  -replace $RoleReplace
-                Write-verbose "    Step target-roles = $($newStep.Properties.'Octopus.Action.TargetRoles'), was '$($SourceStep.Properties.'Octopus.Action.TargetRoles')'."
+                Write-verbose ("    Step target-roles         set to '{0}', source was '{1}'." -f $newStep.Properties.'Octopus.Action.TargetRoles', $SourceStep.Properties.'Octopus.Action.TargetRoles')
         }
 
         $newStep.pstypeNames.add('OctopusDeploymentStep')
@@ -250,7 +271,7 @@ $p.DeploymentProcess().steps[0] | Add-OctopusProjectDeploymentStep  'Test Projec
                 #re-create the script block otherwise variables from this function are out of scope.
                 $_.name = & ([scriptblock]::create( $NewStepName ))
             }
-            Write-Verbose "    Action $($_.name) - was $($SourceStep.Actions[$actionCount].Name)."
+            Write-Verbose ("    Action: '{0}' - source name was '{1}'." -f $_.name, $SourceStep.Actions[$actionCount].Name )
             $_.pstypeNames.add('OctopusDeploymentAction')
             $_.id            = [guid]::NewGuid().tostring()
             $_.Properties    =   $SourceStep.Actions[$actionCount].Properties.psobject.Copy()
@@ -261,12 +282,30 @@ $p.DeploymentProcess().steps[0] | Add-OctopusProjectDeploymentStep  'Test Projec
             foreach ($k in $NewActionParameters.Keys) {
                 if ($_.properties.$k) {
                     $_.properties.$k = $NewActionParameters.$k
-                    Write-verbose "        Property '$k' = $($_.properties.$k)"
+                    Write-verbose ("        {0,-21} set to '{1}'." -f $k,$_.properties.$k )
                 }
             }
             if ($RoleReplace.count -eq 2 -and $_.TargetRoles) {
                 $_.TargetRoles = $_.TargetRoles -replace $RoleReplace
-                Write-verbose "        Action target-roles = $($_.TargetRoles), was '$($SourceStep.Actions[$actionCount].TargetRoles)'."
+                Write-verbose "        Action target-roles   set to '$($_.TargetRoles)', source was '$($SourceStep.Actions[$actionCount].TargetRoles)'."
+            }
+            if ($ExcludeEnvironmentIDs) {
+                if ($_.Environments) {
+                    $allowedEnvironments = $_.Environments.Where({$_ -notin $ExcludeEnvironmentIDs})
+                    if (-not $allowedEnvironments) {
+                        Write-Verbose "        All the environments are excluded, disabling..."
+                        $_.IsDisabled = $true
+                        $_.IsRequired = $false
+                    }
+                    else {
+                        $_.Environments = @() + $allowedEnvironments
+                        Write-Verbose "        Allowed environments  set to $($_.Environments -join ', ')."
+                    }
+                }
+                else {
+                        $_.ExcludedEnvironments += $ExcludeEnvironmentIDs
+                        Write-Verbose "        Excluded environments set to $( $_.ExcludedEnvironments -join ', ')."
+                }
             }
             $actionCount ++
         }

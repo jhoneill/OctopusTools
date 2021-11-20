@@ -1,39 +1,3 @@
-function Get-OctopusLibraryScriptModule     {
-<#
-    .example
-    Get-OctopusLibraryScriptModule  | foreach { Get-OctopusLibraryScriptModule $_.name -ExpandModules  > "$pwd\$($_.name).ps1"}
-#>
-    [cmdletBinding(DefaultParameterSetName='Default')]
-    [Alias('Get-OctopusScriptModule')]
-    param   (
-        [ArgumentCompleter([OptopusLibScriptModulesCompleter])]
-        [Parameter(ParameterSetName='Default',  Mandatory=$false, Position=0, ValueFromPipeline=$true )]
-        [Parameter(ParameterSetName='Expand',   Mandatory=$true,  Position=0, ValueFromPipeline=$true )]
-        $ScriptModule,
-
-        [Parameter(ParameterSetName='Expand',   Mandatory=$true  )]
-        [switch]$Expand
-    )
-    process {
-        $item = Get-Octopus -Kind libraryvariableset -Key $ScriptModule |
-                    Where-Object ContentType -eq 'ScriptModule' | Sort-Object -Property name
-        if     (-not $Expand) {$item}
-        else   {
-            foreach ($m in $item) {
-                $hash = [ordered]@{Name=$m.Name}
-                Invoke-OctopusMethod $m.Links.Variables | Select-Object -ExpandProperty variables | ForEach-Object {
-                    #names have "[script name]" appended - we don't want that so remove them
-                    $n = $_.name -replace '\s*\[.*\]\s*$',''
-                    $hash[$n]=$_.value
-                }
-                $result = [pscustomobject]$hash
-                $result.pstypenames.add('OctopusLibraryScriptModule')
-                $result
-            }
-        }
-    }
-}
-
 function New-OctopusLibraryScriptModule     {
     [Alias('New-OctopusScriptModule')]
     param   (
@@ -596,4 +560,3 @@ function Import-OctopusVariableSetFromXLSX  {
     }
     Write-Progress -Activity "Importing from worksheet $($ws.name)" -Completed
 }
-

@@ -74,8 +74,8 @@ class OptopusLibVariableSetsCompleter  : IArgumentCompleter { # get library vari
                                                       [CommandAst]$CommandAst, [IDictionary] $FakeBoundParameters) {
         $results        = [List[CompletionResult]]::new()
         $wordToComplete = $wordToComplete -replace "^`"|^'|'$|`"$", ''
-        (Invoke-OctopusMethod -EndPoint libraryvariablesets -ExpandItems).
-            where({$_.contenttype -eq 'variables' -and $_.Name -like "$wordToComplete*"}).
+        (Invoke-OctopusMethod -EndPoint 'libraryvariablesets?contentType=Variables' -ExpandItems).
+            where({$_.Name -like "$wordToComplete*"}).
                 foreach({
                     if ($_.Name -Notmatch '\W'){$results.Add([CompletionResult]::new(    $_.Name    , $_.Name, ([CompletionResultType]::ParameterValue) , $_.Name)) }
                     else                       {$results.Add([CompletionResult]::new("'$($_.Name)'" , $_.Name, ([CompletionResultType]::ParameterValue) , $_.Name)) }
@@ -88,8 +88,8 @@ class OptopusLibScriptModulesCompleter : IArgumentCompleter { # get libray scrip
                                                       [CommandAst]$CommandAst, [IDictionary] $FakeBoundParameters) {
         $results        = [List[CompletionResult]]::new()
         $wordToComplete = $wordToComplete -replace "^`"|^'|'$|`"$", ''
-        (Invoke-OctopusMethod -EndPoint libraryvariablesets -ExpandItems ).
-            where({$_.contenttype -eq 'ScriptModule' -and $_.Name -like "$wordToComplete*"}).
+        (Invoke-OctopusMethod -EndPoint 'libraryvariablesets?contentType=ScriptModule' -ExpandItems ).
+            where({$_.Name -like "$wordToComplete*"}).
                 foreach({
                     if ($_.Name -Notmatch '\W'){$results.Add([CompletionResult]::new(    $_.Name    , $_.Name, ([CompletionResultType]::ParameterValue) , $_.Name)) }
                     else                       {$results.Add([CompletionResult]::new("'$($_.Name)'" , $_.Name, ([CompletionResultType]::ParameterValue) , $_.Name)) }
