@@ -133,7 +133,7 @@ function Import-OctopusActionTemplate       {
     Instead of getting the text from a file accepts it as a string (or array of strings)
 
 .PARAMETER Force
-    Normally the command will prompt for confirmation before importing. Force supresses the prompt/
+    Supresses any confirmation message. By default the command prompts for confirmation before importing.
 
 .EXAMPLE
     C:> dir *.json | import-OctopusActionTemplate -force
@@ -187,7 +187,7 @@ function  Update-OctopusTemplateUsage       {
     Multiple items can be passed via the pipeline or the command line, and names should tab complate
 
 .PARAMETER Force
-    By default the command will prompt for confirmation before updating, if -Force is used the prompt is supressed.
+    Supresses any confirmation message. By default the command will prompt for confirmation before updating.
 
 .EXAMPLE
      C:> Get-OctopusActionTemplate 'Create an IIS Application Host web site' -force

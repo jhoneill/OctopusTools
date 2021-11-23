@@ -22,8 +22,7 @@ function Edit-OctopusDeploymentProcess      {
         If one is specified an update will be triggered
 
     .PARAMETER Force
-        If specified runs the update proces without any confirmation prompts.
-        It is a superset of Apply, -Apply -Force does the same as -Force alone.
+        Supresses any confirmation message. Force is a superset of Apply; so -Apply -Force does the same as -Force alone.
 
     .EXAMPLE
     C> Edit-OctopusDeploymentProcess -Project Banana -Apply
