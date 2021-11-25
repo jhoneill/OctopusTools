@@ -22,20 +22,28 @@ function Get-OctopusRelease                 {
         [switch]$Project
     )
     process {
-        if     ($Release.ReleaseId) {$Release = $Release.ReleaseId}
-        elseif ($Release.Id)        {$Release = $Release.Id}
-        if     ($Release -notmatch '^Releases-\d+$') {
-                Write-Warning "'$Release' doesn't look like a valid release: ID it should be in the from releases-12345 "
-                return
+        if      ($Release -is [string] -and $Release -match '^Projects-\d+%') {
+                 $Release = Get-OctopusProject -Project $Release
         }
-        $item = Invoke-OctopusMethod -PStype OctopusRelease -EndPoint "releases/$Release"
-        if     (-not $item)   {return}
-        elseif ($Artifacts)   { $item.Artifacts()   }
-        elseif ($Deployments) { $item.Deployments() }
-        elseif ($LifeCycle)   { $item.LifeCycle()   }
-        elseif ($Phases)      { $item.Progression() }
-        elseif ($Project)     { $item.Project()     }
-        else                  { $item}
+        elseif  ($Release.Releases)  {$Release = $Release.Releases()}
+        foreach    ($r in $Release) {
+            if     ($r.ReleaseId) {$r = $r.ReleaseId}
+            elseif ($r.Id)        {$r = $r.Id}
+            if     ($r -notmatch '^Releases-\d+$') {
+                    Write-Warning "'$r' doesn't look like a valid release: ID it should be in the from releases-12345 "
+                    If ($r -is [string] -and $PSBoundParameters.ContainsKey('Project')){
+                        Write-Warning "Did you intend  Get-OctopusProject '$r' -releases "
+                    }
+            }
+            $item = Invoke-OctopusMethod -PStype OctopusRelease -EndPoint "releases/$r"
+            if     (-not $item)   {Continue}
+            elseif ($Artifacts)   {$item.Artifacts()}
+            elseif ($Deployments) {$item.Deployments()}
+            elseif ($LifeCycle)   {$item.LifeCycle()}
+            elseif ($Phases)      {$item.Progression()}
+            elseif ($Project)     {$item.Project()}
+            else                  {$item}
+        }
     }
 }
 
@@ -68,20 +76,30 @@ Get-OctopusDeployment  Deployments-82  -DeploymentProcess | % steps | % actions 
         [switch]$Project
     )
     process {
-        if     ($Deployment.DeploymentId) {$Deployment = $Deployment.DeploymentId}
-        elseif ($Deployment.Id)           {$Deployment = $Deployment.Id}
-        if     ($Deployment -notmatch '^Deployments-\d+$') {
-            Write-Warning "'$Deployment' doesn't look like a valid Deployment ID it should be in the from Deployments-12345 "
-            return
+        if      ($Deployment -is [string] -and $Deployment -match '^releases-\d+%') {
+                 $Deployment = Get-OctopusRelease -Release $Deployment
         }
-        $item = Invoke-OctopusMethod -PSType OctopusDeployment -EndPoint "deployments/$Deployment"
-        if     (-not $item) {return}
-        elseif ($Artifacts) {$item.Artifacts()}
-        elseif ($Process)   {$item.DeploymentProcess()}
-        elseif ($Project)   {$item.Project()}
-        elseif ($Release)   {$item.Release() }
-        elseif ($Task)      {$item.Task() }
-        else                {$item}
+        elseif  ($Deployment.Deployments)  {$Deployment = $Deployment.Deployments()}
+        elseif  ($Deployment -is [string] -and $Deployment -match '^Projects-\d+%') {
+                 $Deployment = Get-OctopusProject -Project $Deployment -Releases | ForEach-Object {$_.Deployments()}
+        }
+        elseif  ($Deployment.Releases)  {$Deployment = $Deployment.Releases()    | ForEach-Object {$_.Deployments()} }
+        foreach ($d in $Deployment) {
+            if     ($d.DeploymentId) {$d = $d.DeploymentId}
+            elseif ($d.Id)           {$d = $d.Id}
+            if     ($d -notmatch '^Deployments-\d+$') {
+                Write-Warning "'$d' doesn't look like a valid Deployment ID it should be in the from Deployments-12345 "
+                return
+            }
+            $item = Invoke-OctopusMethod -PSType OctopusDeployment -EndPoint "deployments/$d"
+            if     (-not $item) {return}
+            elseif ($Artifacts) {$item.Artifacts()}
+            elseif ($Process)   {$item.DeploymentProcess()}
+            elseif ($Project)   {$item.Project()}
+            elseif ($Release)   {$item.Release() }
+            elseif ($Task)      {$item.Task() }
+            else                {$item}
+        }
     }
 }
 

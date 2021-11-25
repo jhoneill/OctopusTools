@@ -18,29 +18,26 @@ function Watch-OctopusTask                  {
         [Alias('ID')]
         $Task,
 
-        $Type = "info|error|fatal"
+        $Type = "info|error|fatal",
+
+        $Exclude = "Artifacts for collection|Keeping this deployment|Did not find any deployments|Extracting package|Delta|Found Matching version|Using Package"
     )
+    if     ($Task.TaskId) {$Task = $Task.TaskId}
+    elseif ($Task.Id)     {$Task = $Task.Id}
+    if     ($Task -notmatch '^\w+tasks-\d+$') {
+            Write-Warning "$Task doesn't look like a valid task ID it should be in the from tasks-12345 "
+            return
+    }
+    $oldRaw  = @()
+    do {
+        $t   = Get-OctopusTask  $task  # need to keep checking it is still executing
+        $raw = $t.raw() -split '[\r\n]+'
 
-        if     ($Task.TaskId) {$Task = $Task.TaskId}
-        elseif ($Task.Id)     {$Task = $Task.Id}
-        if     ($Task -notmatch '^\w+tasks-\d+$') {
-                Write-Warning "$Task doesn't look like a valid task ID it should be in the from tasks-12345 "
-                return
-        }
-       # $tempPath = [System.IO.Path]::GetTempFileName()
-       # $psdPath  = Resolve-Path "$PSScriptRoot\..\OctopusTools.psd1"
-
-       # $null = Start-ThreadJob -ScriptBlock {
-       #        $null = Import-Module $using:psdpath -Force
-                $offset = 0
-                do {
-                    $t      = Get-OctopusTask  $task # $using:Task
-                    $raw    = $t.raw()
-                    $raw.Substring($offset) | Format-Octopuslog -Type $using:type # | Format-Table -HideTableHeaders | Out-string
-                    #Add-Content -Path $using:temppath -Value ($text.trim() )
-                    $offset = $raw.Length
-                }  while ($t.State -eq 'Executing' -and (-not (Start-Sleep -Seconds 5)))
-        #}
-        #while (-not (Test-Path $tempPath)) {Start-sleep -Seconds 1} # Give the thread job a chance to start
-        #Get-Content -Wait $temppath
+        $s   = (Compare-Object $oldRaw $raw| Where-Object sideindicator -eq '=>' | Select-Object -ExpandProperty Inputobject |
+                    Format-Octopuslog -Type $Type|  Where-Object Message -NotMatch $Exclude |
+                        Format-Table -HideTableHeaders | Out-string).Trim()
+        if ($s) {$s}
+        $oldraw = $raw
+    }
+    while ($t.State -eq 'Executing' -and (-not (Start-Sleep -Seconds 5)))
 }

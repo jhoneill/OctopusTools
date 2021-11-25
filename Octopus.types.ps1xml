@@ -70,9 +70,9 @@
             Param ([parameter(Mandatory=$true)]$Destination)
             if (-not (Test-path -PathType Container -Path $Destination)) {throw "$Destination is not a valid directory"}
             else {
-            $Outfile =  Join-Path (Resolve-Path $Destination) $this.Filename
-            Invoke-WebRequest -OutFile $outFile -URI (($env:OctopusUrl -replace '/$','') +  $this.Links.Content ) -Headers  @{'X-Octopus-ApiKey' = $env:OctopusApiKey }
-            Get-Item $OutFile
+            $RawParams = @{Outfile =  (Join-Path (Resolve-Path $Destination) $this.Filename)}
+            Invoke-OctopusMethod  -RawParams $RawParams -endpoint $this.Links.Content -ProgressPreference SilentlyContinue
+            Get-Item $RawParams.OutFile
             }
         </Script></ScriptMethod>
     </Members>

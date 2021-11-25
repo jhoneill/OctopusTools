@@ -34,14 +34,16 @@ function Get-OctopusProject                 {
         [switch]$DeploymentSettings,
 
         [Parameter(ParameterSetName='AllReleases',       Mandatory=$true)]
-        [Alias('AllReleases')]
+        [Alias('AllReleases','R')]
         [switch]$Releases,
 
         [Parameter(ParameterSetName='ReleaseVersion',    Mandatory=$true)]
+        [Alias('RV')]
         $ReleaseVersion,
 
         [Parameter(ParameterSetName='Runbooks',          Mandatory=$true)]
-        [switch]$Runbooks,
+        [Alias('RB')]
+        [switch]$RunBooks,
 
         [Parameter(ParameterSetName='Triggers',          Mandatory=$true)]
         [switch]$Triggers,
@@ -57,7 +59,7 @@ function Get-OctopusProject                 {
         elseif  ($Channels)           {$item.Channels()}
         elseif  ($DeploymentProcess)  {$item.DeploymentProcess()}
         elseif  ($DeploymentSettings) {$item.DeploymentSettings()}
-        elseif  ($Runbooks)           {$item.Runbooks()}
+        elseif  ($RunBooks)           {$item.Runbooks()}
         elseif  ($Triggers)           {$item.Triggers()}
         elseif  ($Variables)          {$item.Variables()}
         elseif  ($ReleaseVersion)     {$item.Releases()   | Where-Object {$_.version -like $ReleaseVersion} }

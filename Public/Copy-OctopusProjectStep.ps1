@@ -86,7 +86,7 @@ function Copy-OctopusProjectStep            {
         so if the first line selected 4 steps and the second imported 5 sevices the whole process would add 20 steps to "enable-Everything"
 
     #>
-    [cmdletbinding(DefaultParameterSetName='ByProjectName')]
+    [cmdletbinding(DefaultParameterSetName='ByProjectName',SupportsShouldProcess=$true)]
     param (
         [Parameter(Mandatory=$false, ParameterSetName='PipedAndProject',    Position=0 )]
         [Parameter(Mandatory=$true,  ParameterSetName='ByProjectName', Position=0 )]

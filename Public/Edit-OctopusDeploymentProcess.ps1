@@ -33,7 +33,7 @@ function Edit-OctopusDeploymentProcess      {
     Allows the user to select and re-order the steps but this time the new step order is wrriten to
     a file which can be reviewed before applying the update
     #>
-    [cmdletbinding(DefaultParameterSetName='ByProjectName',SupportsShouldProcess=$true)]
+    [cmdletbinding(DefaultParameterSetName='ByProjectName',SupportsShouldProcess=$true,ConfirmImpact='high')]
     param (
         [Parameter(Mandatory=$true,  ParameterSetName='ByProjectName', Position=0 )]
         [ArgumentCompleter([OptopusGenericNamesCompleter])]
