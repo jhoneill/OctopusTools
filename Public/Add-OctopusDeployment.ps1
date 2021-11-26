@@ -33,7 +33,7 @@ function Add-OctopusDeployment              {
             This command uses the release ID which was displayed in the output of the previous example
             to create an additional deployment. You could also find the release IDs for the project with
 
-            Get-OctopusProject "banana"  -Releases
+            Get-OctopusProject "banana"  -AllReleases
     #>
     [cmdletbinding(SupportsShouldProcess=$true)]
     param   (

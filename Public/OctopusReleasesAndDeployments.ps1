@@ -22,20 +22,26 @@ function Get-OctopusRelease                 {
         [switch]$Project
     )
     process {
-        if      ($Release -is [string] -and $Release -match '^Projects-\d+%') {
+        if      ($Release -is [string] -and $Release -match '^Projects-\d+$') {
                  $Release = Get-OctopusProject -Project $Release
         }
         elseif  ($Release.Releases)  {$Release = $Release.Releases()}
         foreach    ($r in $Release) {
-            if     ($r.ReleaseId) {$r = $r.ReleaseId}
-            elseif ($r.Id)        {$r = $r.Id}
-            if     ($r -notmatch '^Releases-\d+$') {
-                    Write-Warning "'$r' doesn't look like a valid release: ID it should be in the from releases-12345 "
-                    If ($r -is [string] -and $PSBoundParameters.ContainsKey('Project')){
-                        Write-Warning "Did you intend  Get-OctopusProject '$r' -releases "
-                    }
+            if     ($r.pstypenames -contains 'OctopusRelease') { #Already a deployment
+                    $item = $r
             }
-            $item = Invoke-OctopusMethod -PStype OctopusRelease -EndPoint "releases/$r"
+            else {
+                if     ($r.ReleaseId) {$r = $r.ReleaseId}
+                elseif ($r.Id)        {$r = $r.Id}
+                if     ($r -notmatch '^Releases-\d+$') {
+                        Write-Warning "'$r' doesn't look like a valid release: ID it should be in the from releases-12345 "
+                        if ($r -is [string] -and $PSBoundParameters.ContainsKey('Project')){
+                            Write-Warning "Did you intend  Get-OctopusProject '$r' -AllReleases "
+                        }
+                        continue
+                }
+                $item = Invoke-OctopusMethod -PStype OctopusRelease -EndPoint "releases/$r"
+            }
             if     (-not $item)   {Continue}
             elseif ($Artifacts)   {$item.Artifacts()}
             elseif ($Deployments) {$item.Deployments()}
@@ -76,23 +82,30 @@ Get-OctopusDeployment  Deployments-82  -DeploymentProcess | % steps | % actions 
         [switch]$Project
     )
     process {
-        if      ($Deployment -is [string] -and $Deployment -match '^releases-\d+%') {
+        if      ($Deployment -is [string] -and $Deployment -match '^releases-\d+$') {
                  $Deployment = Get-OctopusRelease -Release $Deployment
         }
-        elseif  ($Deployment.Deployments)  {$Deployment = $Deployment.Deployments()}
-        elseif  ($Deployment -is [string] -and $Deployment -match '^Projects-\d+%') {
-                 $Deployment = Get-OctopusProject -Project $Deployment -Releases | ForEach-Object {$_.Deployments()}
-        }
-        elseif  ($Deployment.Releases)  {$Deployment = $Deployment.Releases()    | ForEach-Object {$_.Deployments()} }
+        #if we got a relase or just expanded a release ID to a release use it's Deployments method
+        if       ($Deployment.Deployments)  {$Deployment = $Deployment.Deployments()}
         foreach ($d in $Deployment) {
-            if     ($d.DeploymentId) {$d = $d.DeploymentId}
-            elseif ($d.Id)           {$d = $d.Id}
-            if     ($d -notmatch '^Deployments-\d+$') {
-                Write-Warning "'$d' doesn't look like a valid Deployment ID it should be in the from Deployments-12345 "
-                return
+            if     ($d.pstypenames -contains 'OctopusDeployment') { #Already a deployment
+                    $item = $d
             }
-            $item = Invoke-OctopusMethod -PSType OctopusDeployment -EndPoint "deployments/$d"
-            if     (-not $item) {return}
+            else   {
+                if     ($d.DeploymentId) {$d = $d.DeploymentId}
+                elseif ($d.Id)           {$d = $d.Id}
+
+                if     ($d -match '^Deployments-\d+$') {  #we got a deployment ID, get its deployment.
+                        $item = Invoke-OctopusMethod -PSType OctopusDeployment -EndPoint "deployments/$d"}
+                elseif ($d -match   '^Projects-\d+$')    { #there's an API call to get a projects deployments direcly.
+                        $item = Invoke-OctopusMethod -PSType OctopusDeployment -EndPoint "deployments?projects=$d" -ExpandItems -First 100
+                }
+                else   {
+                        Write-Warning "'$d' doesn't look like a valid Deployment ID it should be in the from Deployments-12345 "
+                        continue
+                }
+            }
+            if     (-not $item) {continue}
             elseif ($Artifacts) {$item.Artifacts()}
             elseif ($Process)   {$item.DeploymentProcess()}
             elseif ($Project)   {$item.Project()}
@@ -106,14 +119,9 @@ Get-OctopusDeployment  Deployments-82  -DeploymentProcess | % steps | % actions 
 function Get-OctopusTask                    {
     [cmdletBinding(DefaultParameterSetName='Default')]
     param   (
-        [Parameter(Position=0,ValueFromPipeline=$true, Mandatory=$true,ParameterSetName='Default')]
-        [Parameter(Position=0,ValueFromPipeline=$true, Mandatory=$true,ParameterSetName='Artifacts')]
-        [Parameter(Position=0,ValueFromPipeline=$true, Mandatory=$true,ParameterSetName='Details')]
-        [Parameter(Position=0,ValueFromPipeline=$true, Mandatory=$true,ParameterSetName='Raw')]
+        [Parameter(Position=0,ValueFromPipeline=$true )]
         [Alias('ID')]
         $Task,
-
-        # Queued, , Failed, Canceled, TimedOut, Success, Cancelling
 
         [Parameter(ParameterSetName='Artifacts',       Mandatory=$true)]
         [switch]$Artifacts,
@@ -124,51 +132,52 @@ function Get-OctopusTask                    {
         [Parameter(ParameterSetName='Raw',             Mandatory=$true)]
         [switch]$Raw,
 
-        [Parameter(ParameterSetName='Canceled',        Mandatory=$true)]
+        # Queued, , Failed, Canceled, TimedOut, Success, Cancelling
+        [switch]$Executing,
+        [switch]$Failed,
+        [switch]$Success,
+        [switch]$Queued,
         [switch]$Canceled,
 
-        [Parameter(ParameterSetName='Executing',       Mandatory=$true)]
-        [switch]$Executing,
-
-        [Parameter(ParameterSetName='Failed',          Mandatory=$true)]
-        [switch]$Failed,
-
-        [Parameter(ParameterSetName='Queued',          Mandatory=$true)]
-        [switch]$Queued,
-
-        [Parameter(ParameterSetName='Success',         Mandatory=$true)]
-        [switch]$Success,
-
-        [Parameter(ParameterSetName='Canceled')]
-        [Parameter(ParameterSetName='Failed')]
-        [Parameter(ParameterSetName='Queued')]
-        [Parameter(ParameterSetName='Executing')]
-        [Parameter(ParameterSetName='Success')]
         [Alias('Take')]
         [int]$First = 50
     )
     process {
-        foreach ($state in @('Canceled','Executing', 'Failed','Queued', 'Success')) {
-            if ($PSBoundParameters.ContainsKey($state)) {
-                Invoke-OctopusMethod -PSType OctopusTask -EndPoint "tasks?States=$state&take=$First" -ExpandItems
-                return
+        if (-not $Task) {
+            foreach ($state in @('Canceled','Executing', 'Failed','Queued', 'Success')) {
+                if ($PSBoundParameters.ContainsKey($state)) {
+                    Invoke-OctopusMethod -PSType OctopusTask -EndPoint "tasks?States=$state&take=$First" -ExpandItems
+                    $gotAllForState = $true
+                }
             }
         }
-        #Invoke-OctopusMethod -PSType OctopusTask -EndPoint "tasks?running=true&take=$First" -ExpandItems
+        if   ($gotAllForState) {return }
+        else {$stateRegex =  @('Canceled','Executing', 'Failed','Queued', 'Success').Where({$PSBoundParameters.ContainsKey($_)}) -join '|'}
+        if   (-not $stateRegex) {$stateRegex = '.'}
 
-        if     ($Task.TaskId) {$Task = $Task.TaskId}
-        elseif ($Task.Id)     {$Task = $Task.Id}
-        if     ($Task -notmatch '^\w+tasks-\d+$') {
-                Write-Warning "$Task doesn't look like a valid task ID it should be in the from tasks-12345 "
-                return
+        if      (  ($Task -is [string] -and $Task -match '^releases-\d+$|^Deployments-\d+$|^Projects-\d+$') -or
+                   ($Task.id -and $Task.id -match '^releases-\d+$|^Projects-\d+$' -and -not $Task.TaskId)) {
+                    $Task =  Get-OctopusDeployment -Deployment $Task
         }
-        $item = Invoke-OctopusMethod -PSType OctopusTask -EndPoint "tasks/$Task"
-
-        if     (-not $item) {return}
-        elseif ($Artifacts) {$item.Artifacts()}
-        elseif ($Details)   {$item.Details()}
-        elseif ($Raw)       {$item.Raw() }
-        else                {$item}
+        foreach ($t in $Task) {
+            if  ($t.pstypenames -contains 'OctopusTask' ) {
+                $item = $t
+            }
+            else {
+                if     ($t.TaskId) {$t = $t.TaskId}
+                elseif ($t.Id)     {$t = $t.Id}
+                if     ($t -notmatch '^\w+tasks-\d+$') {
+                        Write-Warning "$t doesn't look like a valid task ID it should be in the from tasks-12345 "
+                        continue
+                }
+                $item = Invoke-OctopusMethod -PSType OctopusTask -EndPoint "tasks/$t"
+            }
+            if     (-not $item -or $item.state -notmatch $stateRegex) {Continue}
+            elseif ($Artifacts) {$item.Artifacts()}
+            elseif ($Details)   {$item.Details()}
+            elseif ($Raw)       {$item.Raw() }
+            else                {$item}
+        }
     }
 }
 

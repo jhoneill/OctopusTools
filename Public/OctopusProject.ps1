@@ -1,7 +1,7 @@
 function Get-OctopusProject                 {
     <#
     # ExampleFodder
-    Get-OctopusProject 'Random Quotes' -Releases | ogv -PassThru | foreach {$_.delete()}
+    Get-OctopusProject 'Random Quotes' -AllReleases | ogv -PassThru | foreach {$_.delete()}
     Get-OctopusProject 'Random Quotes' -DeploymentProcess | % steps | % actions | % properties
     (OctopusProject here*).releases().where({$_.version -like '*20'}).Deployments()[0].task().raw()
     Invoke-OctopusMethod "projects/Projects-21/deploymentprocesses"                        | select -expand steps  |select -expand actions | select -expand properties
@@ -15,6 +15,7 @@ function Get-OctopusProject                 {
         [Parameter(ParameterSetName='Channels',          Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='DeploymentProcess', Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='DeploymentSettings',Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
+        [Parameter(ParameterSetName='LastRelease',       Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='AllReleases',       Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='ReleaseVersion',    Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Runbooks',          Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
@@ -33,9 +34,13 @@ function Get-OctopusProject                 {
         [Parameter(ParameterSetName='DeploymentSettings',Mandatory=$true)]
         [switch]$DeploymentSettings,
 
+        [Parameter(ParameterSetName='LastRelease',       Mandatory=$true)]
+        [Alias('LR')]
+        [switch]$LastRelease,
+
         [Parameter(ParameterSetName='AllReleases',       Mandatory=$true)]
-        [Alias('AllReleases','R')]
-        [switch]$Releases,
+        [Alias('Releases','AR')]
+        [switch]$AllReleases,
 
         [Parameter(ParameterSetName='ReleaseVersion',    Mandatory=$true)]
         [Alias('RV')]
@@ -56,13 +61,14 @@ function Get-OctopusProject                 {
         #xxxx todo Some types still to add for these methods in the types.ps1mxl file
         if      (-not $item)                               {return}
         elseif  ($PSCmdlet.ParameterSetName -eq 'Default') {$item}
-        elseif  ($Channels)           {$item.Channels()}
-        elseif  ($DeploymentProcess)  {$item.DeploymentProcess()}
+        elseif  ($Channels)           {$item.Channels()    }
+        elseif  ($DeploymentProcess)  {$item.DeploymentProcess() }
         elseif  ($DeploymentSettings) {$item.DeploymentSettings()}
-        elseif  ($RunBooks)           {$item.Runbooks()}
-        elseif  ($Triggers)           {$item.Triggers()}
-        elseif  ($Variables)          {$item.Variables()}
-        elseif  ($ReleaseVersion)     {$item.Releases()   | Where-Object {$_.version -like $ReleaseVersion} }
-        else                          {$item.Releases() }
+        elseif  ($RunBooks)           {$item.Runbooks()    }
+        elseif  ($Triggers)           {$item.Triggers()    }
+        elseif  ($Variables)          {$item.Variables()   }
+        elseif  ($LastRelease)        {$item.Releases(1)   }
+        elseif  ($ReleaseVersion)     {$item.Releases()    | Where-Object {$_.version -like $ReleaseVersion} }
+        else                          {$item.Releases()    }
     }
 }

@@ -6,6 +6,7 @@ These are tools I have been working on to **manage Octopus** in a PowerShell mod
 *   Only a few functions have meaningful help. My plan is to move the  help out to markdown files for *Platypus* to work with. 
 *   As yet there are no *Pester* tests.
 *   Some of the functions use the `ImportExcel` module. If it is not present that functionality is designed to fail gracefully.
+*   One function will also use the Burnt Toast module for notifications; if it isn't present the parameters for it go away.
 *   A PSD1 file loads type and format information, utility classes and the .PSM1.    
     In turn the PSM1 loads all the functions from PS1 files in Public and/or Private directories and at
     the moment these are not fully organized. I'm moving towards one file per function, sharing the same name, 
@@ -23,8 +24,8 @@ These are tools I have been working on to **manage Octopus** in a PowerShell mod
 *   **Authenticating.** `Invoke-OctopusMethod` takes parameters `OctopusUrl`, 
     `APIKey` and `SpaceId` and gets default values for them from
     `$env:OctopusUrl`, `$env:OctopusApiKey` and `$env:OctopusSpaceID`.    
-    Another function, `Connect-Octopus`, sets these variables for the sesssion (I may move away from environment variables), it will take either a credential with the url 
-    as the name and the API key as the password or take each in its own parameter as plain text. 
+    Another function, `Connect-Octopus`, sets these variables for the session (I may move away from environment variables), 
+    it will take either a credential with the URL as the name and the API key as the password or take each in its own parameter as plain text. 
     If it is talking to a version of Octopus that supports spaces, connecting will convert a Space-name (or "default") to its ID and store for the Invoke command to us; if spaces aren't supported it will set the space to use to null.    
     If the PSM sees the environment variables (when the module is being reloaded) it 
     uses them in a call to `Connect-Octopus`, if not, if it can see an **Octopus.xml** file in 

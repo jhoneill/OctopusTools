@@ -232,7 +232,9 @@
             } | Sort-Object -Unique
         </Script>                                                                                  </ScriptMethod>
         <ScriptMethod><Name>DeploymentSettings</Name><Script>Invoke-OctopusMethod -PSType OctopusDeploymentSettings -EndPoint  $this.Links.DeploymentSettings</Script>                         </ScriptMethod>
-        <ScriptMethod><Name>Releases</Name>          <Script>Invoke-OctopusMethod -PSType OctopusRelease            -EndPoint ($this.Links.Releases -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
+        <ScriptMethod><Name>Releases</Name>          <Script>param ($first = 100)
+                                                             Invoke-OctopusMethod -PSType OctopusRelease            -EndPoint ($this.Links.Releases -replace '\{.*$','' ) -ExpandItems -first $first
+        </Script></ScriptMethod>
         <ScriptMethod><Name>Runbooks</Name>          <Script>Invoke-OctopusMethod -PSType OctopusRunBook            -EndPoint ($this.Links.Runbooks -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
         <ScriptMethod><Name>Triggers</Name>          <Script>Invoke-OctopusMethod                                   -EndPoint ($this.Links.Triggers -replace '\{.*$','' ) -ExpandItems</Script></ScriptMethod>
         <ScriptMethod><Name>Variables</Name>         <Script>Invoke-OctopusMethod -PSType OctopusVariableSet        -EndPoint  $this.Links.Variables</Script>                                  </ScriptMethod>

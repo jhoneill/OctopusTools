@@ -1,8 +1,8 @@
 function Invoke-OctopusMethod               {
-<#
-     .SYNOPSIS
+    <#
+      .SYNOPSIS
         Handles all the common functions of making a rest API Call to Octopus Deploy.
-    .DESCRIPTION
+      .DESCRIPTION
         Invokes a REST method It avoids the need to pass space and credentials to other commands
         When POSTING it can translate an object or hash-table into a JSON body.
         When GETTING it can expand the items collection and handle paged responses which
@@ -10,39 +10,42 @@ function Invoke-OctopusMethod               {
         In can filter results to those where Name (or ID) matches one of a set of values provided.
         And it can add a typename to enable PowerShell's formatting and type expansion.
 
-    .PARAMETER EndPoint
+      .PARAMETER EndPoint
         The API URI to call, the function will add http://host , /api/ space-id/ as needed.
 
-    .PARAMETER PSType
+      .PARAMETER PSType
         A type name, typically "OctpusThing", that is added to PSTypeNames. Formatting and type
         information can then recognize the item as an OctopusThing, and not just a PSCustomObject.
 
-    .PARAMETER ExpandItems
+      .PARAMETER ExpandItems
         If specified, expands the Items returned by the REST API.
 
-    .PARAMETER Name
+      .PARAMETER Name
         Filters GET operations based on the Name property.
 
-    .PARAMETER First
+      .PARAMETER First
         Returns the only the first n items.
 
-    .PARAMETER Method
+      .PARAMETER Method
         GET , POST, PUT, DELETE etc.
 
-    .PARAMETER Item
+      .PARAMETER Item
         An item to be converted to JSON in a PUT or POST request.
 
-    .PARAMETER JSONBody
+      .PARAMETER JSONBody
         If the item to be sent is already expressed as JSON it can be passed as a body instead of using the Item parameter.
 
-    .PARAMETER ContentType
+      .PARAMETER ContentType
         Defaults to 'application/json; charset=utf-8', but can be overridden if the contents of JSONBody is something else.
 
-    .PARAMETER RawParams
+      .PARAMETER RawParams
         If specified, even as an empty hash table, Invoke-WebRequest is used instead of Invoke-RestMethod adding parameters from the hash table to those Invoke-RestMethod would use
         The primary use is to return Raw JSON instead of a PS Custom Object
 
-    .PARAMETER APIKey
+      .PARAMETER ProgressPreference
+        Overrides the default progress preference while the command is running -ProgressPreference SilentlyContinue will prevent "downloading" messages
+
+      .PARAMETER APIKey
         The Octopus API Key - found from the environment variable OctopusApiKey by default
 
     .PARAMETER OctopusUrl
@@ -50,6 +53,14 @@ function Invoke-OctopusMethod               {
 
     .PARAMETER SpaceId
         The Octopus space, NULL if the server doesn't support spaces,- found from the environment variable OctopusSpaceID default.
+
+    .EXAMPLE
+        PS  > $a = $deployment.artifacts() | select -last 1
+        PS  > Invoke-OctopusMethod -RawParams @{Outfile= (join-path $pwd $a.filename)} -EndPoint $a.links.Content -ProgressPreference SilentlyContinue
+
+        The first command gets an artifact object which contains a link to download its content and a filename,
+        and the second uses Invoke-OctopusMethod in Raw mode, specifying an output file path to get and save the content,
+        and supressing the progress display during the download
 #>
     [Alias('iom')]
     [cmdletbinding(DefaultParameterSetName="Default")]
@@ -88,6 +99,8 @@ function Invoke-OctopusMethod               {
         [Parameter(ParameterSetName='Raw',Mandatory=$true)]
         [hashtable]$RawParams,
 
+        [ActionPreference]$ProgressPreference = $PSCmdlet.GetVariableValue('ProgressPreference'),
+
         $APIKey     = $env:OctopusApiKey,
         $OctopusUrl = $env:OctopusUrl,
         $SpaceId    = $env:OctopusSpaceID
@@ -124,6 +137,7 @@ function Invoke-OctopusMethod               {
                                 Write-Debug $restParams.body
                 }
                 if ($RawParams) {
+                    $local:ProgressPreference = "SilentlyContinue"
                     (Invoke-WebRequest @restParams -uri $uri @RawParams).content
                 }
                 else   {
