@@ -28,6 +28,11 @@ function Export-OctopusDeploymentProcess    {
         [Parameter(Position=1)]
         $Destination = $pwd,
 
+        [Parameter(Position=2)]
+        [ValidateCount(0,1)]
+        [Alias('Name','Index')]
+        [object[]]$Filter,
+
         [Alias('PT')]
         [switch]$PassThru,
 
@@ -36,7 +41,7 @@ function Export-OctopusDeploymentProcess    {
 
     process {
         if ($Project.Name -and $Project.DeploymentProcess ) {
-            $name        = $Project.Name
+            $name       = $Project.Name
             $process    = $Project.DeploymentProcess()
         }
         else {
@@ -45,6 +50,7 @@ function Export-OctopusDeploymentProcess    {
                 $process.ProjectId | Export-OctopusDeploymentProcess -Destination $Destination -PassThru:$PassThru -Force:$Force
                 return
             }
+            elseif ($process.ProjectName) {$name = $process.ProjectName}
             else {$name = $process.Id}
         }
         $Steps   = @()
@@ -58,6 +64,14 @@ function Export-OctopusDeploymentProcess    {
                         $a.packages.foreach({$_.id = $null  })
             }
             $steps += $newstep
+        }
+        foreach ($f in $Filter) {
+            if      ($f.Name)         {$f = [scriptblock]::Create(('$_.name -like "{0}"' -f $f.Name )) }
+            elseif  ($f -is [string]) {$f = [scriptblock]::Create(('$_.name -like "{0}"' -f $f      )) }
+
+            if      ($f -is [System.ValueType])     {$Steps = $Steps[$f]}
+            else    {$steps = $steps | Where-Object $f}
+            if     (-not $steps) {Write-Warning "All steps were excluded by the filter";return}
         }
         if     (Test-Path $Destination -PathType Container )    {$DestPath = (Join-Path $Destination $name) + '.json' }
         elseif (Test-Path $Destination -IsValid -PathType Leaf) {$DestPath = $Destination}

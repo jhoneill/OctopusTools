@@ -193,11 +193,18 @@
   <Type><Name>OctopusPackage</Name>
     <Members>
         <ScriptMethod><Name>RelatedSteps</Name><Script>
-            Get-OctopusProject | Where-Object {$_.DeploymentProcess().steps.actions.packages.where( {$_.packageID -eq $this.packageId -and $_.FeedId -eq $this.feedid })} | ForEach-Object {
-                $Projectname = $_.name
-                $_.DeploymentProcess().steps.actions | Where-Object {$_.packages.packageID -eq $this.packageId} |
-                    Select-Object @{n='Projectname';e={$Projectname}} ,Name, ActionType, CanBeUsedForProjectVersioning, IsDisabled, IsRequired
+            Get-OctopusProject | Where-Object {$_.DeploymentProcess().steps.actions.packages.where( {$_.packageID -eq $this.packageId -and $_.FeedId -eq $this.feedid })} |
+                ForEach-Object {
+                    $Projectname = $_.name
+                    $_.DeploymentProcess().steps.actions | Where-Object {$_.packages.packageID -eq $this.packageId} |
+                        Select-Object @{n='Projectname';e={$Projectname}} ,Name, ActionType, CanBeUsedForProjectVersioning, IsDisabled, IsRequired
+                }
+        </Script></ScriptMethod>
+        <ScriptMethod><Name>AllVersions</Name><Script>
+            if ($this.FeedId -and $this.Feedid -notmatch 'builtin'  ) {
+                    Invoke-OctopusMethod -PSType OctopusPackage -EndPoint "/feeds/$($this.Feedid)/packages/versions?packageid=$($this.PackageID)" -ExpandItems
             }
+            elseif ($this.Links.AllVersions) {    Invoke-OctopusMethod -PSType OctopusPackage -EndPoint $this.Links.AllVersions -ExpandItems}
         </Script></ScriptMethod>
     </Members>
   </Type>
