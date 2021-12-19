@@ -269,7 +269,8 @@ function Get-OctopusDeploymentReport        {
 
         #For example @{PivotRows = "Project Name"; PivotColumns = "State"; PivotData = @{"Release ID" = "Count"}; PivotFilter = "Month"; PivotChartType = ColumnStacked}
         [hashtable]$ExcelOptions,
-        [switch]$Show
+        [switch]$Show,
+        [ActionPreference]$ProgressPreference = $PSCmdlet.GetVariableValue('ProgressPreference')
     )
     begin   {
             if     ($Path -like '*.xlsx' -and -not (Get-Command -ErrorAction SilentlyContinue Export-Excel)) {

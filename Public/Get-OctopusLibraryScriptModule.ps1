@@ -22,6 +22,7 @@ function Get-OctopusLibraryScriptModule     {
         Gets a list of all modules, and for each one calls the command again with the expand option,
         and writes the script out to a PSM1 file with the same name as the module
     #>
+
     [cmdletBinding(DefaultParameterSetName='Default')]
     [Alias('Get-OctopusScriptModule')]
     param   (

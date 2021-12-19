@@ -254,7 +254,7 @@ function Add-OctopusArtifact                {
         $artifact['SpaceId'] = $env:OctopusSpaceID
     }
     if ($Force -or $pscmdlet.ShouldProcess($Task,"Add file $Name as artifact of task")) {
-        $newartifact = Invoke-OctopusMethod -Method Post -EndPoint artifacts -Item $artifact
+        $newartifact = Invoke-OctopusMethod -PSType 'OctopusArtifact' -Method Post -EndPoint artifacts -Item $artifact
         Invoke-OctopusMethod -EndPoint $newartifact.Links.Content  -Method Put -RawParams @{InFile=$Path}
         if ($PassThru) {$newartifact}
     }

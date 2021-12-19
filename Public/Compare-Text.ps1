@@ -170,7 +170,8 @@ function Compare-Text {
             and move both sides to the next line. Don't forget file line numbers start at 1 but arrays at 0 !#>
             $refsSkipped = @{}
             $difsAhead   =@{}
-            while ($refCount -lt $ReferenceText.Count -or $difcount -lt $DifferenceObject.Count) {
+            while  ($refCount -lt $ReferenceText.Count -or  $difcount -lt $DifferenceObject.Count) {
+                if ($refcount -gt $ReferenceText.Count)    {$refcount  =  $ReferenceText.Count}
                 $r = $ReferenceText[$refcount -1]
                 $d = $DifferenceObject[$difcount -1]
                 if     ($refcount -in $refonlyLines -and (-not $ignoreRegEx -or -not $ignoreRegEx.IsMatch($r))) {($r -replace '^(\s*)', "`$1$stSeq$removedSeq") + $resetSeq ; $refcount ++ ;            $nextref = $refcount }
@@ -179,14 +180,14 @@ function Compare-Text {
                 elseif ($difcount -in $difonlyLines)                                                            {$unchangedSeq + $d + $resetSeq ; $difcount ++ ;                                                               $difsAhead[$d] ++}
                 else    {
                     # if the reference line is one the diff side has already done, move ref forward to catch up
-                    while      ($difsAhead[$r] ){                                                                                                                             $refcount ++ ;                                   $difsAhead[$r] --
+                    while      ($r -and $difsAhead[$r] -and $refcount -lt $ReferenceText.Count){                                                                              $refcount ++ ;                                   $difsAhead[$r] --
                                                     $r = $ReferenceText[$refcount -1]}
                     if         ($r -eq $d)                                                                      {$unchangedSeq + $d + $resetSeq ; $difcount ++ ;              $refcount ++ ;            $nextref = $refcount }
                     else {
                        # if     ($refcount -notin $refonlyLines)  {
                                                     if (-not $refsSkipped[$r]) {$refsSkipped[$r] = $refcount}                                                                 $refcount ++
                                                     $r = $ReferenceText[$refcount -1]
-                            while ($difsAhead[$r] ){                                                                                                                          $refcount ++  ;                                 $difsAhead[$r]  --
+                            while ($r -and $difsAhead[$r] -and $refcount -lt $ReferenceText.Count){                                                                           $refcount ++  ;                                  $difsAhead[$r]  --
                                                     $r = $ReferenceText[$refcount -1]}
                         #}
                         if     ($r -eq $d)                                                                      {$unchangedSeq + $d + $resetSeq ; $difcount ++ ;              $refcount ++ ;            $nextref = $refcount }

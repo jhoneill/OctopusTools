@@ -34,6 +34,9 @@ function Get-OctopusScopedStep             {
     .PARAMETER Environment
         Narrows the scope to one or mmore environments. Can be used without specifying a role, but this may return a large number of steps.
 
+      .PARAMETER ProgressPreference
+        Allows the Progress bar act differently in the function, specifying silentlyContinue will suppress it.
+
     .EXAMPLE
         C:>Get-OctopusScopedStep database
 
@@ -68,7 +71,9 @@ function Get-OctopusScopedStep             {
 
         [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Parameter(Position=2,ValueFromPipeline=$true)]
-        $Project = ""
+        $Project = "",
+
+        [ActionPreference]$ProgressPreference = $PSCmdlet.GetVariableValue('ProgressPreference')
 
     )
     begin   {

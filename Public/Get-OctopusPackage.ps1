@@ -9,7 +9,7 @@ function Get-OctopusPackage                 {
         stored in a built in feed, it can download the item.
 
       .PARAMETER Package
-        A package object or the package ID. If not specified all the packages for the selected feed will be returned
+        A package object or the package ID for one or more packages. If not specified all the packages for the selected feed will be returned
 
       .PARAMETER Feed
         The name, ID or object describing a feed. If none is specified the built in feed will be used.
@@ -24,7 +24,10 @@ function Get-OctopusPackage                 {
         Downloads the package to a to specified directory.
 
      .PARAMETER PassThru
-        When used with Destination, returns the files which are downloadd
+        When used with Destination, returns the files which are downloaded
+
+      .PARAMETER ProgressPreference
+        Allows the Progress bar act differently in the function, specifying silentlyContinue will suppress it.
 
       .EXAMPLE
         ps > Get-OctopusPackage PowerShellScripts -AllVersions
@@ -67,19 +70,29 @@ function Get-OctopusPackage                 {
 
         [Parameter(ParameterSetName='AllVersions',       Mandatory=$true)]
         [Parameter(ParameterSetName='Feed',              Mandatory=$false)]
-        [switch]$AllVersions
+        [switch]$AllVersions,
+
+        [ActionPreference]$ProgressPreference = $PSCmdlet.GetVariableValue('ProgressPreference')
 
     )
     process {
+        if      ($Package.count -gt 1) {
+                $null = $PSBoundParameters.Remove('Package')
+                $Package | Get-OctopusPackage @PSBoundParameters
+                return
+        }
         if      ($Package.FeedID)               {$Feed = $Package.FeedID}
         elseif  ($Feed.id)                      {$Feed = $Feed.ID}
         elseif  ($Feed -is [string] -and
                  $Feed -notmatch '^feeds-\d+$') {$Feed = (Get-OctopusFeed $Feed).id }
+        if      ($Feed.count -gt 1)    {
+                Write-Warning 'The command does not support multiple feeds'
+        }
 
         if      ($Package.PackageID) {$Package = $Package.PackageID}
         elseif  ($Package.ID)        {$Package = $Package.Id}
 
-        if      ($Package -match '^packages-(?!Feeds-\d+-).*\.\d+$')  { #package is the ID for an internal package
+        if      ($Package -is [string] -and $Package -match '^packages-(?!Feeds-\d+-).*\.\d+$')  { #package is the ID for an internal package
                  $item = Invoke-OctopusMethod -PSType OctopusPackage -EndPoint "packages/$Package"
         }
         elseif ((-not $Feed) -or $Feed -match 'builtin')              { #package comes from the built-in feed or
@@ -97,6 +110,7 @@ function Get-OctopusPackage                 {
                     Invoke-OctopusMethod -PSType OctopusPackage "/feeds/$Feed/packages/versions?packageid=$($p.id)&versionrange=$($p.latestversion)" -ExpandItems
                     $count += 100
                  }
+                 Write-Progress -Activity 'Getting Packages' -Completed
         }
         else   {Write-Warning "Could not make sense of the supplied package and/or feed parameter"}
 

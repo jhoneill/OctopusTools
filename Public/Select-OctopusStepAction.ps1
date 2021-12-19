@@ -58,7 +58,7 @@
         [switch]$PositionOnly
     )
     process {
-        if      ($Step.pstypenames -Notcontains 'OctopusDeploymentStep') {
+        if      ($Step.pstypenames -Notcontains 'OctopusProcessStep') {
                 Write-Warning 'The Step parameter must contain a step from a deployment process' ; return}
 
         foreach ($f in $Filter) {

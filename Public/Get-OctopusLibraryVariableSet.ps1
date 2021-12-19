@@ -1,31 +1,33 @@
 function Get-OctopusLibraryVariableSet      {
-    <#
-      .SYNOPSIS
-        Return objects representing entries the library's variable sets section, or with the - variables switch the varaible set attached to it
+<#
+.SYNOPSIS
+    Return objects representing entries the library's variable sets section, or with the - variables switch the varaible set attached to it
 
-      .DESCRIPTION
-        Octotpus attaches project-specific variable sets to Projects; the same variable-set objects can have an entry in the
-        library's variable set section as a parent. The sets can be expanded with Expand-OctopusVariableSet whether their
-        parent is a library entry or a project
+.DESCRIPTION
+    Octotpus attaches project-specific variable sets to Projects; the same variable-set objects can have an entry in the
+     library's variable set section as a parent. The sets can be expanded with Expand-OctopusVariableSet whether their
+     parent is a library entry or a project
 
-      .PARAMETER LibraryVariableSet
-        The set of interest
 
-      .PARAMETER Variables
-        Returns the variable set, instead of the library entry.
+.PARAMETER LibraryVariableSet
+    The set of interest
 
-      .EXAMPLE
-        C:> Get-OctopusLibraryVariableSet
-        Returns the list of variable sets in the library
+.PARAMETER Variables
+    Returns the variable set, instead of the library entry.
 
-      .EXAMPLE
-        C:> Get-OctopusLibraryVariableSet "core" -variables
-        Returns the sets of variables in the library with the name "core" in the library
+.EXAMPLE
+    C:> Get-OctopusLibraryVariableSet
+    Returns the list of variable sets in the library
 
-      .EXAMPLE
-        C:> Get-OctopusLibraryVariableSet "core" -variables  | Expand-OctopusVariableSet
-        Follows on from the previous example by expanding the variables in the set showing their values and scopes
-    #>
+.EXAMPLE
+    C:> Get-OctopusLibraryVariableSet "core" -variables
+    Returns the sets of variables in the library with the name "core" in the library
+
+.EXAMPLE
+    C:> Get-OctopusLibraryVariableSet "core" -variables  | Expand-OctopusVariableSet
+    Follows on from the previous example by expanding the variables in the set showing their values and scopes
+
+#>
     [cmdletbinding(DefaultParameterSetName='Default')]
     param   (
         [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
@@ -35,7 +37,10 @@ function Get-OctopusLibraryVariableSet      {
         $LibraryVariableSet ,
 
         [Parameter(ParameterSetName='Variables',Mandatory=$true,ValueFromPipelineByPropertyName=$true)]
-        [switch]$Variables
+        [switch]$Variables,
+
+        [Parameter(DontShow=$true)]
+        $VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
     )
 
     process {

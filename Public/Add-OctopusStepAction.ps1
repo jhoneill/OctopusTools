@@ -98,13 +98,16 @@ function Add-OctopusStepAction            {
 
         $RoleReplace,
 
-        $ExcludeEnvironmentIDs
+        $ExcludeEnvironmentIDs,
+
+        [Parameter(DontShow=$true)]
+        [ActionPreference]$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
     )
     begin   { #check parameters have the right types, and get project's deployment Step if need be
         if     ($NewActionName -and $NewActionName -isnot [string] -and $NewActionName -isnot [scriptblock]) {
                 throw 'The new Action name must be a string or a scriptblock'
         }
-        if     ($Step          -and $Step.pstypenames -notcontains    'OctopusDeploymentStep') {
+        if     ($Step          -and $Step.pstypenames -notcontains    'OctopusProcessStep') {
                 throw 'Step is not valid, it must be an existing deployment Step.'
         }
         #if before is specified split the Actions into those before that one, and that one and after.
@@ -126,12 +129,12 @@ function Add-OctopusStepAction            {
     process {
         #region  figure out what to do with piped input we should get to a Step and the Action going into it
         #first reject anything which isn't a Action, a project or a proces, and convert projects to their Step
-        if       ($InputObject   -and -not ($InputObject.pstypenames.where({$_ -in @('OctopusDeploymentAction','OctopusDeploymentStep')}))) {
+        if       ($InputObject   -and -not ($InputObject.pstypenames.where({$_ -in @('OctopusProcessAction','OctopusProcessStep')}))) {
                   Write-Warning 'Input object is not valid it must be a deployment Action, or a deployment step' ; Return
         }
 
         #if Input object was a project and became its Step OR if was a Step to start with
-        if       ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusDeploymentStep') {
+        if       ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusProcessStep') {
             if   ($PSBoundParameters.Step) {
                   Write-Warning 'Input object cannot be a deployment Step when a step is specified as a parameter' ; Return
             }
@@ -172,7 +175,7 @@ function Add-OctopusStepAction            {
         $newAction            = $Step.Actions[-1]
         $newAction.Properties = $SourceAction.Properties.psobject.Copy()
         $newAction.Packages   = @($SourceAction.Packages.foreach({ $_.psobject.Copy() }) )
-        $newAction.pstypenames.add('OctopusDeploymentAction')
+        $newAction.pstypenames.add('OctopusProcessAction')
         Add-Member     -InputObject $newAction -NotePropertyName StepName    -NotePropertyValue $Step.Name
         if ($Step.ProjectID) {
             Add-Member -InputObject $newAction -NotePropertyName ProjectId   -NotePropertyValue $Step.ProjectId

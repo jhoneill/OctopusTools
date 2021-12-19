@@ -1,4 +1,4 @@
-function Add-OctopusProjectStep            {
+function Add-OctopusProcessStep            {
     <#
       .SYNOPSIS
         Adds a step to a project's deployment process, either importing from JSON, copying form  another Project, or duplicatingwithin the same project
@@ -17,7 +17,7 @@ function Add-OctopusProjectStep            {
 
       .PARAMETER Process
         An object representing the deployment process to be modified, this can come from a project,
-        or can be a modified process  for example from a previous call to Add-OctopusProjectSteps
+        or can be a modified process  for example from a previous call to Add-OctopusProcessSteps
 
       .PARAMETER SourceStep
         An object representing the step to be copied into the project, or a block of JSON describing it.
@@ -65,12 +65,12 @@ function Add-OctopusProjectStep            {
         ps >$p         = Get-OctopusProject -Name "Test Project 77"
         ps >$newport    = "1001"
         ps >$newservice = "portal"
-        ps >$p.DeploymentProcess().steps[0] | Add-OctopusProjectStep  'Test Project 77' -NewStepName "Add $newService"  -UpdateScript {
+        ps >$p.DeploymentProcess().steps[0] | Add-OctopusProcessStep  'Test Project 77' -NewStepName "Add $newService"  -UpdateScript {
         >>            $NewStep.Actions[0].Name = $NewStep.Name; $NewStep.Actions[0].Properties.Port = $newport; $NewStep.Actions[0].Properties.ServiceName =  $newservice
         >>  }
 
-        The first line gets a project and the final line passeses the first step of its deployment process into Add-OctopusProjectStep.
-        In the case, Add-OctopusProjectStep is modifying the same projct. It sets the name of the copied step
+        The first line gets a project and the final line passeses the first step of its deployment process into Add-OctopusProcessStep.
+        In the case, Add-OctopusProcessStep is modifying the same projct. It sets the name of the copied step
         using a varaible, and uses a script to modifiy only the first action in the step, changing its name, "port" property and "ServiceName" property.
 
       .EXAMPLE
@@ -81,16 +81,16 @@ function Add-OctopusProjectStep            {
         >>            NewStepName         = [scriptblock]::Create("`$name -replace 'Banana','$($_.serviceName)'")
         >>            NewActionParameters = @{Port = $_.port; SiteName = $_.SiteName; WhatIf = 'False'}
         >>      }
-        >>     $steps  | Add-OctopusProjectStep @params -Project 'Enable-Everything' -Force
+        >>     $steps  | Add-OctopusProcessStep @params -Project 'Enable-Everything' -Force
         >>  }
 
         The first line gets the steps in an existing  deployment process, and uses SELECT-LIST  -Multiple to select a sequence of steps.
         The rest of the example is a loop which repeats for each line in a .csv file
-        1 It builds a set of parameters for Add-OctopusProjectStep which:
+        1 It builds a set of parameters for Add-OctopusProcessStep which:
           * Sets new action parameters,using values from the csv file
           * Sets new names for the steps by replacing part of their name with a value from the csv
           * Sets a new role with a similar substituation
-        2. It then pipes the selected steps into Add-OctopusProjectStep with these parameters to add them to a project named "Enable-Everything",
+        2. It then pipes the selected steps into Add-OctopusProcessStep with these parameters to add them to a project named "Enable-Everything",
         so if the first line selected 4 steps and the second imported 5 sevices the whole process would add 20 steps to "enable-Everything"
 
     #>
@@ -131,14 +131,17 @@ function Add-OctopusProjectStep            {
 
         [switch]$Apply,
 
-        [switch]$Force
+        [switch]$Force,
+
+        [Parameter(DontShow=$true)]
+        [ActionPreference]$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
     )
     begin   { #check parameters have the right types, and get project's deployment process if need be
         if     ($NewStepName   -and       $NewStepName -isnot [string] -and $NewStepName -isnot [scriptblock]) {
                 throw 'The new step name must be a string or a scriptblock'
         }
         if     ($SourceStep    -isnot [string] -and
-                                          $SourceStep.pstypenames  -notcontains    'OctopusDeploymentStep') {
+                                          $SourceStep.pstypenames  -notcontains    'OctopusProcessStep') {
                  throw 'SourceStep is not valid, it must be a step from an existing process, or a JSON block describing a step.'
         }
         elseif ($Process       -and       $Process.pstypenames     -notcontains    'OctopusDeploymentProcess') {
@@ -170,7 +173,7 @@ function Add-OctopusProjectStep            {
     process {
         #region  figure out what to do with piped input we should get to a process and the step going into it
         #first reject anything which isn't a step, a project or a proces, and convert projects to their process
-        if       ($InputObject   -and -not ($InputObject.pstypenames.where({$_ -in @('OctopusProject','OctopusDeploymentStep','OctopusDeploymentProcess')}))) {
+        if       ($InputObject   -and -not ($InputObject.pstypenames.where({$_ -in @('OctopusProject','OctopusProcessStep','OctopusDeploymentProcess')}))) {
                   Write-Warning 'Input object is not valid it must be a project, a deployment step, or a Deployment process' ; Return
         }
         elseif   ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusProject') {
@@ -197,7 +200,7 @@ function Add-OctopusProjectStep            {
                 }
             }
         }
-        elseif   ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusDeploymentStep')    {
+        elseif   ($InputObject   -and       $InputObject.pstypenames -contains       'OctopusProcessStep')    {
             if   ($PSBoundParameters.SourceStep)  {Write-Warning 'Input object cannot be a deployment step when a step parameter is specified' ; Return}
             else {
                   $SourceStep  = $InputObject
@@ -211,8 +214,8 @@ function Add-OctopusProjectStep            {
                         Write-Warning "The source step needs to be JSON describing a deployment step, but the one provided is missing the $prop property."; return
                     }
                 }
-                $sourceStep.psTypeNames.Add('OctopusDeploymentStep')
-                foreach ($a in $SourceStep.Actions) {$a.pstypeNames.Add('OctopusDeploymentAction')}
+                $sourceStep.psTypeNames.Add('OctopusProcessStep')
+                foreach ($a in $SourceStep.Actions) {$a.pstypeNames.Add('OctopusProcessAction')}
         }
         if       (-not ($Process -and $SourceStep)) {
                 Write-warning "You must supply a project or its process, and a source step either as parameters or via the pipeline" ; return
@@ -224,7 +227,7 @@ function Add-OctopusProjectStep            {
         $process.Steps         += $SourceStep  | Select-Object -Property * -ExcludeProperty 'ProjectId','ProjectName'
         $newStep                = $process.steps[-1]
         $newStep.id             = [guid]::NewGuid().tostring()
-        $newStep.pstypeNames.add('OctopusDeploymentStep')
+        $newStep.pstypeNames.add('OctopusProcessStep')
         if ($Process.ProjectID) {
                 Add-Member -InputObject $newStep -NotePropertyName 'ProjectID'   -NotePropertyValue $Process.ProjectId -Force
                 Add-Member -InputObject $newStep -NotePropertyName 'ProjectName' -NotePropertyValue (Convert-OctopusID $Process.ProjectId) -Force
@@ -256,7 +259,7 @@ function Add-OctopusProjectStep            {
             foreach ( $p in $_.Packages) {
                       $p.id  = [guid]::NewGuid().tostring()
             }
-            $_.pstypeNames.add('OctopusDeploymentAction')
+            $_.pstypeNames.add('OctopusProcessAction')
             Add-Member     -InputObject $_ -NotePropertyName StepName    -NotePropertyValue $newstep.Name
             if ($NewStep.ProjectID) {
                 Add-Member -InputObject $_ -NotePropertyName ProjectId   -NotePropertyValue $newstep.ProjectId

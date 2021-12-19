@@ -1,21 +1,3 @@
-function Get-OctopusFeed                    {
-    [cmdletBinding(DefaultParameterSetName='Default')]
-    param   (
-        [Parameter(ParameterSetName='Default',  Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
-        [Parameter(ParameterSetName='Search',  Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
-        [Alias('Id','Name')]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
-        $Feed,
-        [Parameter(ParameterSetName='Search',  Mandatory=$true, Position=1 ,ValueFromPipelineByPropertyName=$true)]
-        $SearchTerm
-    )
-    process {
-        $item = Get-Octopus -Kind Feed -Key $Feed -ExtraId FeedID
-        if ($SearchTerm) {$item.search($searchTerm)}
-        else             {$item}
-    }
-}
-
 function New-OctopusNugetFeed               {
     [cmdletbinding(SupportsShouldProcess=$true)]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', '', Justification = "Will be sent as plain text")]

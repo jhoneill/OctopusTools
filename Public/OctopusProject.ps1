@@ -14,7 +14,6 @@ function Get-OctopusProject                 {
         [Parameter(ParameterSetName='Default',           Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Channels',          Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='DeploymentProcess', Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
-        [Parameter(ParameterSetName='DeploymentSettings',Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='LastRelease',       Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='AllReleases',       Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='ReleaseVersion',    Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
@@ -30,9 +29,6 @@ function Get-OctopusProject                 {
 
         [Parameter(ParameterSetName='DeploymentProcess', Mandatory=$true)]
         [switch]$DeploymentProcess,
-
-        [Parameter(ParameterSetName='DeploymentSettings',Mandatory=$true)]
-        [switch]$DeploymentSettings,
 
         [Parameter(ParameterSetName='LastRelease',       Mandatory=$true)]
         [Alias('LR')]
@@ -58,17 +54,15 @@ function Get-OctopusProject                 {
     )
     process {
         $item = Get-Octopus -Kind Project -Key $Project -ExtraId ProjectID | Sort-Object -Property ProjectGroupName,Name
-        #xxxx todo Some types still to add for these methods in the types.ps1mxl file
         if      (-not $item)                               {return}
-        elseif  ($PSCmdlet.ParameterSetName -eq 'Default') {$item}
-        elseif  ($Channels)           {$item.Channels()    }
-        elseif  ($DeploymentProcess)  {$item.DeploymentProcess() }
-        elseif  ($DeploymentSettings) {$item.DeploymentSettings()}
-        elseif  ($RunBooks)           {$item.Runbooks()    }
-        elseif  ($Triggers)           {$item.Triggers()    }
-        elseif  ($Variables)          {$item.Variables()   }
-        elseif  ($LastRelease)        {$item.Releases(1)   }
+        elseif  ($PSCmdlet.ParameterSetName -eq 'Default') {$item }
+        elseif  ($Channels)           {$item.Channels()           }
+        elseif  ($DeploymentProcess)  {$item.DeploymentProcess()  }
+        elseif  ($RunBooks)           {$item.Runbooks()           } #XXXX todo on runbook support
+        elseif  ($Triggers)           {$item.Triggers()           } #and on OctopusDeploymentTrigger
+        elseif  ($Variables)          {$item.Variables()          }
+        elseif  ($LastRelease)        {$item.Releases(1)          }
         elseif  ($ReleaseVersion)     {$item.Releases()    | Where-Object {$_.version -like $ReleaseVersion} }
-        else                          {$item.Releases()    }
+        else                          {$item.Releases()           }
     }
 }

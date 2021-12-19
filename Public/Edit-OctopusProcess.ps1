@@ -1,4 +1,4 @@
-function Edit-OctopusDeploymentProcess      {
+function Edit-OctopusProcess      {
     <#
     .SYNOPSIS
         Re-orders and/or removes steps in a project's Deployment Process
@@ -25,11 +25,11 @@ function Edit-OctopusDeploymentProcess      {
         Supresses any confirmation message. Force is a superset of Apply; so -Apply -Force does the same as -Force alone.
 
     .EXAMPLE
-    C> Edit-OctopusDeploymentProcess -Project Banana -Apply
+    C> Edit-OctopusProcess -Project Banana -Apply
     Allows the user to select and re-order the steps in the named project
 
     .EXAMPLE
-    C> Edit-OctopusDeploymentProcess -Project Banana | convertTo-json -Depth 10 | out-file "Short.json"
+    C> Edit-OctopusProcess -Project Banana | convertTo-json -Depth 10 | out-file "Short.json"
     Allows the user to select and re-order the steps but this time the new step order is wrriten to
     a file which can be reviewed before applying the update
     #>

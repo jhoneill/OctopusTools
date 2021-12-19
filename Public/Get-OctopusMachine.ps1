@@ -72,15 +72,11 @@ function Get-OctopusMachine                 {
                         else   {(Get-Octopus  Environment -Key  $e  ).id }
                     }) -join ',')
                 }
-                $item  =        Invoke-OctopusMethod -PSType OctopusMachine -EndPoint $endpoint -ExpandItems
+                $item  =        Invoke-OctopusMethod -PSType OctopusMachine -ExpandItems -EndPoint $endpoint
         }
-
-        if      ($Connection) {$item | ForEach-Object {
-                                Invoke-OctopusMethod $_.links.Connection
-        }}
-        elseif  ($Tasks)      {$item | ForEach-Object {
-                                Invoke-OctopusMethod -PsType OctopusTask -EndPoint ($_.Links.TasksTemplate -replace '\{.*$','' ) -ExpandItems
-        }}
+        if      (-not $item)  {return}
+        elseif  ($Connection) {$item | ForEach-Object Connection}
+        elseif  ($Tasks)      {$item | ForEach-Object Tasks     }
         else                  {$item }
     }
 }

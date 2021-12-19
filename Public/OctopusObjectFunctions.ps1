@@ -29,7 +29,11 @@ function  Update-OctopusObject              {
     param (
         [Parameter(Position=0,Mandatory=$true,ValueFromPipeline=$true)]
         $InputObject,
-        [switch]$Force
+
+        [switch]$Force,
+
+        [Parameter(DontShow=$true)]
+        [ActionPreference]$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
     )
     process {
         foreach ($obj in $InputObject) {
@@ -70,7 +74,7 @@ function Convert-OctopusID                  {
             if ((-not $Script:IDLookup[$kind]) -or (-not $Script:IDLookup[$kind][$id]) -or [datetime]::Now.AddHours(-1) -gt $Script:IDLookup["Time-$kind"]) {
                 $Script:IDLookup["Time-$kind"] = [datetime]::Now
                 $Script:IDLookup[$kind]        = @{}
-                Invoke-OctopusMethod "$kind/all" -ErrorAction SilentlyContinue | ForEach-Object {
+                Invoke-OctopusMethod "$kind/all" -ErrorAction SilentlyContinue -Verbose:$false | ForEach-Object {
                     $Script:IDLookup[$kind][$_.id] = $_.name
                 }
             }

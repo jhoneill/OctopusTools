@@ -13,6 +13,9 @@ function Get-OctopusMachineUsage            {
       .PARAMETER Project
         Narrows the search to a project or set of projects.
 
+      .PARAMETER ProgressPreference
+        Allows the Progress bar act differently in the function, specifying silentlyContinue will suppress it.
+
       .link
         https://Octopus.com/docs/Octopus-rest-api/examples/deployment-targets/find-target-usage
 
@@ -33,7 +36,9 @@ function Get-OctopusMachineUsage            {
         $Machine,
 
         [ArgumentCompleter([OptopusGenericNamesCompleter])]
-        $Project = ""
+        $Project = "",
+
+        [ActionPreference]$ProgressPreference = $PSCmdlet.GetVariableValue('ProgressPreference')
     )
     process{
         if (-not ($Machine.EnvironmentIds -and $Machine.roles)) {$Machine = Get-OctopusMachine $Machine}

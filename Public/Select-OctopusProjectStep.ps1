@@ -59,7 +59,10 @@ Function Select-OctopusProjectStep {
 
         [switch]$First,
 
-        [switch]$PositionOnly
+        [switch]$PositionOnly,
+
+        [Parameter(DontShow=$true)]
+        [ActionPreference]$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
     )
     process {
         if      ($Project.pstypenames -contains 'OctopusDeploymentProcess') {$process = $Project}

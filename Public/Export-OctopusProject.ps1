@@ -21,6 +21,9 @@ function Export-OctopusProject              {
 
       .PARAMETER TimeOut
         Maximum time to allow the job to complete
+
+      .PARAMETER ProgressPreference
+        Allows the Progress bar act differently in the function, specifying silentlyContinue will suppress it.
     #>
     param (
         [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]
@@ -28,7 +31,8 @@ function Export-OctopusProject              {
         $Project,
         $ZipFilePwd = "DontTellany1!",
         $ZipDestination,
-        $TimeOut=300
+        $TimeOut=300,
+        [ActionPreference]$ProgressPreference = $PSCmdlet.GetVariableValue('ProgressPreference')
     )
     begin {
         if ((Invoke-OctopusMethod api).version -lt [version]::new(2021,1)) {

@@ -74,7 +74,7 @@ class OptopusLibVariableSetsCompleter  : IArgumentCompleter { # get library vari
                                                       [CommandAst]$CommandAst, [IDictionary] $FakeBoundParameters) {
         $results        = [List[CompletionResult]]::new()
         $wordToComplete = $wordToComplete -replace "^`"|^'|'$|`"$", ''
-        (Invoke-OctopusMethod -EndPoint 'libraryvariablesets?contentType=Variables' -ExpandItems).
+        (Invoke-OctopusMethod -EndPoint 'libraryvariablesets?contentType=Variables' -ExpandItems -Verbose:$false).
             where({$_.Name -like "$wordToComplete*"}).
                 foreach({
                     if ($_.Name -Notmatch '\W'){$results.Add([CompletionResult]::new(    $_.Name    , $_.Name, ([CompletionResultType]::ParameterValue) , $_.Name)) }
@@ -88,7 +88,7 @@ class OptopusLibScriptModulesCompleter : IArgumentCompleter { # get libray scrip
                                                       [CommandAst]$CommandAst, [IDictionary] $FakeBoundParameters) {
         $results        = [List[CompletionResult]]::new()
         $wordToComplete = $wordToComplete -replace "^`"|^'|'$|`"$", ''
-        (Invoke-OctopusMethod -EndPoint 'libraryvariablesets?contentType=ScriptModule' -ExpandItems ).
+        (Invoke-OctopusMethod -EndPoint 'libraryvariablesets?contentType=ScriptModule' -ExpandItems -Verbose:$false).
             where({$_.Name -like "$wordToComplete*"}).
                 foreach({
                     if ($_.Name -Notmatch '\W'){$results.Add([CompletionResult]::new(    $_.Name    , $_.Name, ([CompletionResultType]::ParameterValue) , $_.Name)) }
@@ -116,7 +116,7 @@ class OptopusPermissionsCompleter      : IArgumentCompleter { # get library vari
                                                       [CommandAst]$CommandAst, [IDictionary] $FakeBoundParameters) {
         $results        = [List[CompletionResult]]::new()
         $wordToComplete = $wordToComplete -replace "^`"|^'|'$|`"$", ''
-        (Invoke-OctopusMethod -EndPoint permissions/all -SpaceId $null).psobject.properties.name.
+        (Invoke-OctopusMethod -EndPoint permissions/all -SpaceId $null -Verbose:$false).psobject.properties.name.
             where({$_ -like "$wordToComplete*"}).
                 foreach({
                     if ($_ -Notmatch '\W'){$results.Add([CompletionResult]::new(    $_    , $_, ([CompletionResultType]::ParameterValue) , $_)) }

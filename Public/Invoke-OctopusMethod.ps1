@@ -54,6 +54,9 @@ function Invoke-OctopusMethod               {
     .PARAMETER SpaceId
         The Octopus space, NULL if the server doesn't support spaces,- found from the environment variable OctopusSpaceID default.
 
+      .PARAMETER ProgressPreference
+        Allows the Progress bar act differently in the function, specifying silentlyContinue will suppress it.
+
     .EXAMPLE
         PS  > $a = $deployment.artifacts() | select -last 1
         PS  > Invoke-OctopusMethod -RawParams @{Outfile= (join-path $pwd $a.filename)} -EndPoint $a.links.Content -ProgressPreference SilentlyContinue
@@ -135,6 +138,9 @@ function Invoke-OctopusMethod               {
                 if ($restParams['body'])      {
                                 $restParams['ContentType'] = $ContentType
                                 Write-Debug $restParams.body
+                }
+                if ($PSVersionTable.PSVersion -ge 7.2) {
+                    Write-Verbose $Uri
                 }
                 if ($RawParams) {
                     $local:ProgressPreference = "SilentlyContinue"
