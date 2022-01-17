@@ -35,14 +35,14 @@ function Get-OctopusMachine                 {
         [Parameter(ParameterSetName='Connection',  Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Tasks',       Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Alias('Id','Name','TargetName')]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Machine,
 
-        [ArgumentCompleter([OptopusMachineRolesCompleter])]
+        [ArgumentCompleter([OctopusMachineRolesCompleter])]
         [Parameter(ParameterSetName='RoleEnv')]
         $Role,
 
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [Parameter(ParameterSetName='RoleEnv')]
         $Environment,
 

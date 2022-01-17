@@ -47,7 +47,7 @@ function Connect-Octopus                    {
         [Parameter(ParameterSetName='Cred')]
         [Parameter(ParameterSetName='SpaceOnly')]
         [Parameter(ParameterSetName='SpaceURLKey')]
-        [ArgumentCompleter([OptopusNullSpaceNamesCompleter])]
+        [ArgumentCompleter([OctopusNullSpaceNamesCompleter])]
         $Space  =  'Default',
 
         [Parameter(ParameterSetName='Status',Mandatory=$true)]

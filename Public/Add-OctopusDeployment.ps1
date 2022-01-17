@@ -40,7 +40,7 @@ function Add-OctopusDeployment              {
         [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]
         $Release,
 
-        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
         [Parameter(Mandatory=$false, Position=1)]
         $Environment,
 

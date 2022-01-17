@@ -23,7 +23,7 @@ function  Update-OctopusTemplateUsage       {
 
     [cmdletbinding(SupportsShouldProcess=$true, ConfirmImpact='High')]
     param (
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [Parameter(Position=0,Mandatory=$true,ValueFromPipeline=$true)]
         [Alias('Id','Name')]
         $ActionTemplate,

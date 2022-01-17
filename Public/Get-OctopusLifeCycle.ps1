@@ -14,7 +14,7 @@ function Get-OctopusLifeCycle               {
         [Parameter(ParameterSetName='Default',           Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Projects',          Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Alias('Id','Name')]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Lifecycle,
 
         [Parameter(ParameterSetName='Projects',          Mandatory=$true)]

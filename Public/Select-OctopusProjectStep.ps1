@@ -50,7 +50,7 @@ Function Select-OctopusProjectStep {
     param   (
         [Parameter(Position=0,ValueFromPipeline=$true,Mandatory=$true)]
         [Alias('Process','DeploymentProcess')]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(Position=1,Mandatory=$true)]

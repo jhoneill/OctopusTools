@@ -30,7 +30,7 @@ function Get-OctopusLibraryVariableSet      {
 #>
     [cmdletbinding(DefaultParameterSetName='Default')]
     param   (
-        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
+        [ArgumentCompleter([OctopusLibVariableSetsCompleter])]
         [Parameter(ParameterSetName='Default',  Mandatory=$false,Position=0,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Variables',Mandatory=$true, Position=0,ValueFromPipeline=$true)]
         [alias('ID','Name')]

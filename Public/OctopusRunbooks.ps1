@@ -5,7 +5,7 @@ function New-OctopusRunbookSnapShot         {
         $Runbook,
 
         [Parameter(Position=1)]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Project,
 
         [switch]$NoPublish,
@@ -60,7 +60,7 @@ Get-OctopusProject he* -Runbooks | Get-OctopusRunbookSnapShot -Runs | ogv  -Pass
         $Runbook,
 
         [Parameter(Position=1,ParameterSetName="ByRunbook")]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(ParameterSetName="ByID")]
@@ -98,12 +98,12 @@ function Start-OctopusRunbook               {
         $Runbook,
 
         [Parameter(Position=1)]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Project,
 
         #$Tennant ,
         [Parameter(Mandatory=$true)]
-        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
         [string[]]$Environment ,
 
         $SnapshotID ,

@@ -41,11 +41,11 @@ function Import-OctopusVariableSetFromXLSX  {
         [Parameter(Position=1)]
         $WorkSheetName  = '*',
 
-        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
+        [ArgumentCompleter([OctopusLibVariableSetsCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Library')]
         $LibraryVariableSet,
 
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Project')]
         $Project,
 

@@ -43,7 +43,7 @@ function Get-OctopusPackage                 {
     #>
     [cmdletBinding(DefaultParameterSetName='Default')]
     param   (
-        [ArgumentCompleter([OptopusPackageNamesCompleter])]
+        [ArgumentCompleter([OctopusPackageNamesCompleter])]
         [Parameter(ParameterSetName='Default',           Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Feed',              Mandatory=$false, Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='AllVersions',       Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
@@ -52,7 +52,7 @@ function Get-OctopusPackage                 {
         [Alias('Name','ID','PackageID')]
         $Package,
 
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [Parameter(ParameterSetName='Feed',              Mandatory=$true, Position=1)]
         $Feed,
 

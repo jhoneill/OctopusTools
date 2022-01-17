@@ -57,6 +57,6 @@ These are tools I have been working on to **manage Octopus** in a PowerShell mod
     and `.Machines()` to objects tagged `OctopusEnvironment`. Knowing this the  `Get-OctopusEnvironment` command can be enhanced with a `-machines` switch, so it calls `Get-Octopus -Kind Environment` to get the objects and for one returned, calls its`.Machines()` method.
 
 *   This consistency made it easy to do argument completers. One,
-    `OptopusGenericNamesCompleter` will assume the parameter name is the object type, so `Get-OctopusEnvironment` has an `Environment` parameter (aliases Name,ID),
+    `OctopusGenericNamesCompleter` will assume the parameter name is the object type, so `Get-OctopusEnvironment` has an `Environment` parameter (aliases Name,ID),
     `Get-OctopusMachine` has a `Machine` parameter (aliases name,ID), and the completer works for both of them and populates the picklist with their `name` property.   
     I've made a few more completers for cases that don't follow this pattern.

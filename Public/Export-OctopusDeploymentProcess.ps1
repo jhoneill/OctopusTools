@@ -22,7 +22,7 @@ function Export-OctopusDeploymentProcess    {
     #>
     param (
         [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true)]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(Position=1)]

@@ -98,7 +98,7 @@ function Add-OctopusProcessStep            {
     param   (
         [Parameter(Mandatory=$false, ParameterSetName='PipedAndProject',    Position=0 )]
         [Parameter(Mandatory=$true,  ParameterSetName='ByProjectName', Position=0 )]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(Mandatory=$false, ParameterSetName='PipedAndProcess')]

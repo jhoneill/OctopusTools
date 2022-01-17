@@ -46,15 +46,15 @@ Function Move-OctopusRelease                {
     [cmdletbinding(SupportsShouldProcess=$true)]
 
     param (
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [Parameter(Mandatory=$true, Position=0,ValueFromPipeline=$true)]
         $Project,
 
-        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
         [Parameter(Mandatory=$true, Position=1)]
          $From,
 
-        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
         [Parameter(Mandatory=$true, Position=2)]
         $Into,
 

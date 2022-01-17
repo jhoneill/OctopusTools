@@ -66,7 +66,7 @@ function New-OctopusScriptActionTemplate    {
         $Name,
 
         $Description,
-        [ArgumentCompleter([OptopusPackageNamesCompleter])]
+        [ArgumentCompleter([OctopusPackageNamesCompleter])]
         [Parameter(ValueFromPipelineByPropertyName=$true,ParameterSetName='Package',Mandatory=$true)]
         $Package,
 
@@ -146,11 +146,11 @@ function Set-OctopusScriptActionTemplate    {
     param (
         [Parameter(Mandatory=$true,Position=0)]
         [Alias('Name','Id')]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $ActionTemplate,
         $Description,
 
-        [ArgumentCompleter([OptopusPackageNamesCompleter])]
+        [ArgumentCompleter([OctopusPackageNamesCompleter])]
         [Parameter(ValueFromPipelineByPropertyName=$true,ParameterSetName='Package',Mandatory=$true)]
         $Package,
 

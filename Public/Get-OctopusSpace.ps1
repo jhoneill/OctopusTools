@@ -17,7 +17,7 @@ General notes
     param   (
         [Parameter(ParameterSetName='Default',  Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Alias('Id','Name')]
-        [ArgumentCompleter([OptopusNullSpaceNamesCompleter])]
+        [ArgumentCompleter([OctopusNullSpaceNamesCompleter])]
         $Space
     )
     process {

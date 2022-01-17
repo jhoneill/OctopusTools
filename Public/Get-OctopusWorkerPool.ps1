@@ -23,7 +23,7 @@ function Get-OctopusWorkerPool              {
         [Parameter(ParameterSetName='Default',  Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Members',  Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Alias('Id','Name')]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $WorkerPool,
         [Parameter(ParameterSetName='Members', Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
         [switch]$Workers

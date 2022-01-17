@@ -65,7 +65,7 @@ function Set-OctopusAction {
         $Action,
 
         [Parameter(ParameterSetName='Project',Mandatory=$true)]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [Alias('DeploymentProcess')]
         $Project,
 

@@ -55,11 +55,11 @@ function Remove-OctopusVariable             {
         [Parameter(Mandatory=$true,Position=0,ParameterSetName='Default')]
         $VariableSet,
 
-        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
+        [ArgumentCompleter([OctopusLibVariableSetsCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Library')]
         $LibraryVariableSet,
 
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Project')]
         $Project,
 

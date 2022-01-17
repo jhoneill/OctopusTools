@@ -6,7 +6,7 @@ function Get-OctopusTeam                    {
         [Parameter(ParameterSetName='Roles',    Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Users',    Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Alias('Name','Id')]
-        [ArgumentCompleter([OptopusNullSpaceNamesCompleter])]
+        [ArgumentCompleter([OctopusNullSpaceNamesCompleter])]
         $Team,
         [Parameter(ParameterSetName='Roles', Mandatory=$true)]
         [alias('ScopedUserRoles')]
@@ -32,7 +32,7 @@ function Get-OctopusTeam                    {
 function Get-OctopusUser                    {
     [cmdletbinding(DefaultParameterSetName='Default')]
     param   (
-        [ArgumentCompleter([OptopusUserNamesCompleter])]
+        [ArgumentCompleter([OctopusUserNamesCompleter])]
         [Parameter(ParameterSetName='Default',      Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Teams',        Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Spaces',       Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
@@ -72,7 +72,7 @@ function Get-OctopusUserRole                {
     [cmdletbinding()]
     param   (
         [Parameter(Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
-        [ArgumentCompleter([OptopusNullSpaceNamesCompleter])]
+        [ArgumentCompleter([OctopusNullSpaceNamesCompleter])]
         [Alias('Name','ID')]
         $UserRole
     )

@@ -21,7 +21,7 @@ function Get-OctopusEnvironment             {
 #>
     [cmdletBinding(DefaultParameterSetName='Default')]
     param   (
-        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
         [Parameter(ParameterSetName='Default',   Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Machines',  Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Variables', Mandatory=$true,  Position=0, ValueFromPipeline=$true)]

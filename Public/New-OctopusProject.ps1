@@ -40,19 +40,19 @@ function New-OctopusProject                 {
         [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         [string]$Description,
 
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         $ProjectGroup,
 
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         $LifeCycle,
 
-        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
+        [ArgumentCompleter([OctopusLibVariableSetsCompleter])]
         [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         $VariableSets,
 
-        [ArgumentCompleter([OptopusLibScriptModulesCompleter])]
+        [ArgumentCompleter([OctopusLibScriptModulesCompleter])]
         [parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
         $ScriptModules
     )

@@ -21,7 +21,7 @@ function Get-OctopusProject                 {
         [Parameter(ParameterSetName='Triggers',          Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Variables',         Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Alias('Id','Name')]
-        [ArgumentCompleter([OptopusGenericNamesCompleter])]
+        [ArgumentCompleter([OctopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(ParameterSetName='Channels', Mandatory=$true)]
