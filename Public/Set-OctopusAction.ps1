@@ -65,7 +65,7 @@ function Set-OctopusAction {
         $Action,
 
         [Parameter(ParameterSetName='Project',Mandatory=$true)]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Alias('DeploymentProcess')]
         $Project,
 
@@ -188,12 +188,12 @@ function Set-OctopusAction {
             }
             if      ($IncludeEnvironmentIDs)  {
                 if  ($a.ExcludedEnvironments) {
-                     $a.ExcludedEnvironments = @() + $a.Environments.Where({$_ -notin $IncludeEnvironmentIDs})
+                     $a.ExcludedEnvironments = @() + $a.ExcludedEnvironments.Where({$_ -notin $IncludeEnvironmentIDs})
                      Write-Verbose "        Disallowed environments  set to $($a.ExcludedEnvironments -join ', ')."
                 }
                 else {
                         $a.Environments += $IncludeEnvironmentIDs
-                        $a.Environments += @() + ($a.Environments  | Sort-Object -Unique)
+                        $a.Environments  = @() + ($a.Environments  | Sort-Object -Unique)
                         Write-Verbose "        Included environments set to $( $a.Environments -join ', ')."
                 }
             }

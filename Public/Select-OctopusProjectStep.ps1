@@ -1,4 +1,4 @@
-Function Select-OctopusProjectStep {
+function Select-OctopusProjectStep {
     <#
       .SYNOPSIS
         Selects one or more steps, or the position of the first matching step from a project's deployment proces
@@ -50,7 +50,7 @@ Function Select-OctopusProjectStep {
     param   (
         [Parameter(Position=0,ValueFromPipeline=$true,Mandatory=$true)]
         [Alias('Process','DeploymentProcess')]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(Position=1,Mandatory=$true)]

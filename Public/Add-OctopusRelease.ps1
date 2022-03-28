@@ -28,7 +28,7 @@ function Add-OctopusRelease                 {
     [cmdletbinding(SupportsShouldProcess=$true)]
     param   (
         [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true)]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project,
 
         $ReleaseVersion,

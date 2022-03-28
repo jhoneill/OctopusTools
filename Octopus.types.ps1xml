@@ -26,14 +26,14 @@
         $actionIDs      = $usage.actionid | Sort-Object -Unique
         $projects       = $usage | Select-Object ProjectName,DeploymentProcessId | Sort-Object -Property projectname -Unique
         $count          = 0
-        $actions        =  foreach ($p in $projects) {
+        $actions        = foreach ($p in $projects) {
             Write-Progress -Activity "Getting Actions for $($template.Name)" -PercentComplete ($count/$projects.Count)
             $steps = (Invoke-OctopusMethod -EndPoint "deploymentprocesses/$($p.DeploymentProcessId)").steps.where({ $_.actions.where( {$_.ID -IN $actionIDs})})
             foreach ($s in $steps) {$s.actions.where({$_.ID -IN $actionIDs}) | Add-Member -PassThru -NotePropertyName StepName -NotePropertyValue $s.Name | Add-Member -PassThru -NotePropertyName TargetRoles -NotePropertyValue $s.Properties.'Octopus.Action.TargetRoles' |Add-Member -PassThru -NotePropertyName ProjectName -NotePropertyValue $p.ProjectName }
             $count += 100
         }
         Write-Progress -Activity "Getting Actions for $($template.Name)" -Completed
-        $proplist       = @('ProjectName', 'StepName', @{n='ActionName'; e='Name'}, 'TargetRoles', 'WorkerPoolId', 'Environments', 'ExcludedEnvironments', @{n='ActionTemplate' ;e={$template.Name}}, @{n='TemplateID'; e={$template.ID}})
+        $proplist       = @('ProjectName', 'StepName', @{n='ActionName'; e='Name'}, 'TargetRoles', 'WorkerPoolId', @{n='Environments';e={($_.Environments |Convert-OctopusID | Sort-Object   ) -join ', '}}, @{n='ExcludedEnvironments';e={($_.ExcludedEnvironments | Convert-OctopusID | Sort-Object) -join ', '}},  @{n='ActionTemplate' ;e={$template.Name}}, @{n='TemplateID'; e={$template.ID}})
         foreach ($p in $template.Parameters) {$proplist += @{n=$p.Name; e=([scriptBlock]::Create('$_.Properties.' +$p.name)) } }
         $actions | Select-Object -Property $proplist
       </Script></ScriptMethod>
@@ -163,6 +163,7 @@
         </Members>
       </MemberSet>
       <ScriptMethod><Name>Projects</Name><Script>Invoke-OctopusMethod -PSType OctopusProject -EndPoint $this.Links.Projects</Script></ScriptMethod>
+      <ScriptMethod><Name>Environments</Name><Script>$this.Phases.foreach({$_.AutomaticDeploymentTargets + $_.OptionalDeploymentTargets})</Script></ScriptMethod>
     </Members>
   </Type>
   <Type><Name>OctopusLibraryVariableSet</Name>
@@ -248,7 +249,7 @@
         </Script></ScriptMethod>
         <ScriptMethod><Name>Environments</Name><Script>
                                                              Invoke-OctopusMethod -PSType OctopusChannel            -EndPoint ($this.Links.Channels -replace '\{.*$','' ) -ExpandItems | ForEach-Object {
-                                                                if   ($_.LifecycleId) {
+                                                                if   ($_.LifecycleId) {1
                                                                       $lifecyclePreview = Invoke-Octopusmethod -endPoint "lifecycles/$($_.LifecycleId)/preview"
                                                                 }
                                                                 else {$lifecyclePreview = Invoke-Octopusmethod -endPoint "lifecycles/$($this.LifecycleId)/preview" }

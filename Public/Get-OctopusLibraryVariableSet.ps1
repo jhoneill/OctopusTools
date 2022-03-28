@@ -30,14 +30,19 @@ function Get-OctopusLibraryVariableSet      {
 #>
     [cmdletbinding(DefaultParameterSetName='Default')]
     param   (
-        [ArgumentCompleter([OctopusLibVariableSetsCompleter])]
-        [Parameter(ParameterSetName='Default',  Mandatory=$false,Position=0,ValueFromPipeline=$true)]
-        [Parameter(ParameterSetName='Variables',Mandatory=$true, Position=0,ValueFromPipeline=$true)]
+        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
+        [Parameter(ParameterSetName='Default',   Mandatory=$false, Position=0, ValueFromPipeline=$true)]
+        [Parameter(ParameterSetName='Variables', Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
+        [Parameter(ParameterSetName='GridView',  Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [alias('ID','Name')]
-        $LibraryVariableSet ,
+        $LibraryVariableSet,
 
-        [Parameter(ParameterSetName='Variables',Mandatory=$true,ValueFromPipelineByPropertyName=$true)]
+        [Parameter(ParameterSetName='Variables', Mandatory=$true,  ValueFromPipelineByPropertyName=$true)]
+        [Parameter(ParameterSetName='GridView',  Mandatory=$false, ValueFromPipelineByPropertyName=$true)]
         [switch]$Variables,
+
+        [Parameter(ParameterSetName='GridView',  Mandatory=$true,  ValueFromPipelineByPropertyName=$true)]
+        [switch]$GridView,
 
         [Parameter(DontShow=$true)]
         $VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
@@ -54,7 +59,8 @@ function Get-OctopusLibraryVariableSet      {
             $item = Invoke-OctopusMethod -PSType "OctopusLibraryVariableSet" -EndPoint 'libraryvariablesets?contentType=Variables' -ExpandItems
         }
         if     (-not $item) {return}
+        elseif ($GridView)  {$item.Variables().variables | Out-Gridview -Title $item.name}
         elseif ($Variables) {$item.Variables()}
-        else                {$item }
+        else                {$item}
     }
 }

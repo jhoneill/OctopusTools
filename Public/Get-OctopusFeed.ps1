@@ -33,7 +33,7 @@ function Get-OctopusFeed                    {
         [Parameter(ParameterSetName='Default', Mandatory=$false, Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Search',  Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='List',    Mandatory=$false, Position=0, ValueFromPipeline=$true)]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Alias('Id','Name')]
         $Feed,
 

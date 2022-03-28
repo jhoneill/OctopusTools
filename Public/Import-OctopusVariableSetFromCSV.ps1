@@ -31,11 +31,11 @@ function Import-OctopusVariableSetFromCSV   {
         [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true)]
         $Path,
 
-        [ArgumentCompleter([OctopusLibVariableSetsCompleter])]
+        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Library')]
         $LibraryVariableSet,
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Project')]
         $Project
     )

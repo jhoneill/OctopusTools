@@ -181,47 +181,6 @@ function Get-OctopusTask                    {
     }
 }
 
-function Get-OctopusEvent                   {
-<#
-.example
-Get-OctopusEvent projects-61 -OldestFirst | select msg | ogv
-#>
-    [cmdletbinding(DefaultParameterSetName='None')]
-    param   (
-        [Parameter(ParameterSetName='Event',   Mandatory=$true, ValueFromPipeline=$true, Position=0)]
-        $ID,
-        [Parameter(ParameterSetName='From',    Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
-        [dateTime]$From,
-        [Parameter(ParameterSetName='Days',    Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
-        [int]$Days,
-        [Parameter(ParameterSetName='Hours',   Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
-        [int]$Hours,
-        [Parameter(ParameterSetName='Today',   Mandatory=$true)]
-        [switch]$Today,
-        [Alias('Take')]
-        [int]$First,
-        [switch]$OldestFirst
-    )
-    if     ($ID.ID)    {$ID = $ID.ID}
-    if     ($id -and    $ID -notmatch '-\d+$') {
-                Write-Warning "'$ID' doesn't look like a valid ID"
-                return
-    }
-    elseif ($ID -match '^Events-\d+$')     {
-            Invoke-OctopusMethod -PSType OctopusEvent -EndPoint "events/$ID"
-            return
-    }
-
-    $endpoint ='events'
-    if     ($Days)   {$From      = [datetime]::Now.AddDays(-$Days)}
-    elseif ($Hours)  {$From      = [datetime]::Now.AddHours(-$Hours)}elseif ($Today)       {$From      = [datetime]::Today}
-    elseif ($ID)     {$endpoint += "?regardingAny=$ID"}
-    if     ($From)   {$endpoint += '?from={0:yyyy/MM/dd HH:mm}' -f $From }
-
-    $e = Invoke-OctopusMethod -PSType OctopusEvent  -EndPoint $endpoint -ExpandItems -First $First
-    if ($OldestFirst) {$e | Sort-Object -Property Occurred} else {$e}
-}
-
 function Add-OctopusArtifact                {
     [cmdletbinding(SupportsShouldProcess=$true)]
     param   (

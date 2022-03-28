@@ -60,16 +60,16 @@ function Get-OctopusScopedStep             {
         Finds Steps with the database role, but only in projects in the admin group
 #>
     param (
-        [ArgumentCompleter([OctopusMachineRolesCompleter])]
+        [ArgumentCompleter([OptopusMachineRolesCompleter])]
         [Parameter(Position=0,ParameterSetName='Role',Mandatory=$true)]
         [Parameter(Position=0,ParameterSetName='Environment',Mandatory=$false)]
         $Role,
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         [Parameter(Position=1,ParameterSetName='Environment',Mandatory=$true)]
         $Environment ,
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Parameter(Position=2,ValueFromPipeline=$true)]
         $Project = "",
 

@@ -98,7 +98,7 @@ function Add-OctopusProcessStep            {
     param   (
         [Parameter(Mandatory=$false, ParameterSetName='PipedAndProject',    Position=0 )]
         [Parameter(Mandatory=$true,  ParameterSetName='ByProjectName', Position=0 )]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(Mandatory=$false, ParameterSetName='PipedAndProcess')]
@@ -307,4 +307,4 @@ function Add-OctopusProcessStep            {
         }
     }
 }
-#need equivalent for runbooks and for project actions.
+#xxxx todo need equivalent for runbooks and for project actions.

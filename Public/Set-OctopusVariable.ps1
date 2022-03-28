@@ -65,11 +65,11 @@ function Set-OctopusVariable                {
         [Parameter(Mandatory=$true,Position=0,ParameterSetName='Default')]
         $VariableSet,
 
-        [ArgumentCompleter([OctopusLibVariableSetsCompleter])]
+        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Library')]
         $LibraryVariableSet,
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Project')]
         $Project,
 
@@ -87,11 +87,11 @@ function Set-OctopusVariable                {
         [Alias('IsSensitive')]
         [switch]$Sensitive,
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         [Parameter(ValueFromPipelineByPropertyName=$true)]
         $ScopeEnvironment,
 
-        [ArgumentCompleter([OctopusMachineRolesCompleter])]
+        [ArgumentCompleter([OptopusMachineRolesCompleter])]
         [Parameter(ValueFromPipelineByPropertyName=$true)]
         $ScopeRole,
 

@@ -43,12 +43,13 @@ function Enable-OctopusProjectAction {
         the previous step or earlier.)
 
     #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = "False positives.")]
     [cmdletBinding()]
     [Alias('Disable-OctopusProjectAction')]
     param   (
         [Parameter(Position=0,ValueFromPipeline=$true,Mandatory=$true)]
         [Alias('Process','DeploymentProcess')]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(Position=1)]

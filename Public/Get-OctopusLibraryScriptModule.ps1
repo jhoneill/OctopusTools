@@ -26,12 +26,12 @@ function Get-OctopusLibraryScriptModule     {
     [cmdletBinding(DefaultParameterSetName='Default')]
     [Alias('Get-OctopusScriptModule')]
     param   (
-        [ArgumentCompleter([OctopusLibScriptModulesCompleter])]
+        [ArgumentCompleter([OptopusLibScriptModulesCompleter])]
         [Parameter(ParameterSetName='Default',  Mandatory=$false, Position=0, ValueFromPipeline=$true )]
         [Parameter(ParameterSetName='Expand',   Mandatory=$true,  Position=0, ValueFromPipeline=$true )]
         $ScriptModule,
 
-        [Parameter(ParameterSetName='Expand',   Mandatory=$true  )]
+        [Parameter(ParameterSetName='Expand',  Mandatory=$true,  ValueFromPipelineByPropertyName=$true )]
         [switch]$Expand
     )
     process {

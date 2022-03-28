@@ -32,10 +32,10 @@ function Get-OctopusMachineUsage            {
     param   (
         [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true)]
         [alias('Name','ID')]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Machine,
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project = "",
 
         [ActionPreference]$ProgressPreference = $PSCmdlet.GetVariableValue('ProgressPreference')

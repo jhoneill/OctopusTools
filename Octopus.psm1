@@ -1,5 +1,5 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-#sCreate an xml file (only decodable by you on the same computer) in your powershell-profile directory with
+# Create an xml file (only decodable by you on the same computer) in your powershell-profile directory with
 # Get-Credential -Message "URI as username, API Key as password" | Export-Clixml (Join-path (split-path $profile) "Octopus.xml")
 
 if (Test-Path "$PSScriptRoot\Private" -PathType Container) {

@@ -23,7 +23,7 @@ function Get-OctopusWorker                  {
         [Parameter(ParameterSetName='Default',    Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Connection', Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Alias('Id','Name')]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Worker,
         [Parameter(ParameterSetName='Connection', Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
         [switch]$Connection
@@ -35,4 +35,3 @@ function Get-OctopusWorker                  {
             else                 {$item}
     }
 }
-

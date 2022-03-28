@@ -75,6 +75,7 @@ function Add-OctopusStepAction            {
         so if the first line selected 4 Actions and the second imported 5 sevices the whole Step would add 20 Actions to "enable-Everything"
 
     #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = "Should process is set in this function to apply in a function it calls.")]
     [cmdletbinding(DefaultParameterSetName='ByStep',SupportsShouldProcess=$true)]
     param   (
         [Parameter(Mandatory=$false, ParameterSetName='PipedAndStep')]
@@ -199,4 +200,3 @@ function Add-OctopusStepAction            {
     }
     end     {if     ($outputAtEnd) {$Step.Actions += $AfterActions} }
 }
-

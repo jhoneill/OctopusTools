@@ -1,4 +1,4 @@
-function Format-Octopuslog                  {
+function Format-OctopusLog                  {
 <#
     .SYNOPSIS
         Returns a filtered view of a Raw Octopus log as time and message

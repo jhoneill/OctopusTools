@@ -1,4 +1,4 @@
-Function Move-OctopusRelease                {
+function Move-OctopusRelease                {
     <#
       .SYNOPSIS
         Promotes a release from one environment to the next
@@ -46,15 +46,15 @@ Function Move-OctopusRelease                {
     [cmdletbinding(SupportsShouldProcess=$true)]
 
     param (
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Parameter(Mandatory=$true, Position=0,ValueFromPipeline=$true)]
         $Project,
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         [Parameter(Mandatory=$true, Position=1)]
          $From,
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         [Parameter(Mandatory=$true, Position=2)]
         $Into,
 

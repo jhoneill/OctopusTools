@@ -35,7 +35,7 @@ function  Get-OctopusActionTemplate         {
     #>
     [cmdletbinding(DefaultParameterSetName='Default')]
     param   (
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Parameter(Position=0,ValueFromPipeline=$true,ParameterSetName='Default')]
         [Parameter(Position=0,ValueFromPipeline=$true,ParameterSetName='BuiltIn')]
         [Parameter(Position=0,ValueFromPipeline=$true,ParameterSetName='Custom')]

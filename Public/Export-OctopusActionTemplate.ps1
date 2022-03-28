@@ -21,7 +21,7 @@ function Export-OctopusActionTemplate       {
     Exports a template, overwrtiing any existing file
 #>
     param (
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true)]
         [Alias('Id','Name')]
         $ActionTemplate ,

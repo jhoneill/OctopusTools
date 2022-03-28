@@ -6,21 +6,21 @@ function Expand-OctopusPermission           {
          Core logic for Get-OctopusUserAccessReport and Get-OctopusProjectAccessReport
     #>
     param (
-        [ArgumentCompleter([OctopusPermissionsCompleter])]
+        [ArgumentCompleter([OptopusPermissionsCompleter])]
         [Parameter(Mandatory=$true,Position=0)]
         $Permission,
 
         $UnscopedPermission,
-        [ArgumentCompleter([OctopusNullSpaceNamesCompleter])]
+        [ArgumentCompleter([OptopusNullSpaceNamesCompleter])]
         $Space              = "",
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         $Environment        = "",
 
-        [ArgumentCompleter([OctopusUserNamesCompleter])]
+        [ArgumentCompleter([OptopusUserNamesCompleter])]
         $User               = "",
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project            = "",
 
         $PermissionDisplayNames = @{}
@@ -149,19 +149,19 @@ function Get-OctopusUserAccessReport        {
     #
     param (
 
-        [ArgumentCompleter([OctopusPermissionsCompleter])]
+        [ArgumentCompleter([OptopusPermissionsCompleter])]
         [Parameter(Mandatory=$true,Position=0)]
         $Permission,
-        [ArgumentCompleter([OctopusNullSpaceNamesCompleter])]
+        [ArgumentCompleter([OptopusNullSpaceNamesCompleter])]
         $Space              = "",
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         $Environment        = "",
 
-        [ArgumentCompleter([OctopusUserNamesCompleter])]
+        [ArgumentCompleter([OptopusUserNamesCompleter])]
         $User               = "",
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project            = "",
 
         $Path,
@@ -194,16 +194,16 @@ function Get-OctopusUserAccessReport        {
 function Get-OctopusProjectAccessReport     {
 #https://Octopus.com/docs/Octopus-rest-api/examples/reports/project-permissions-report
     param (
-        [ArgumentCompleter([OctopusNullSpaceNamesCompleter])]
+        [ArgumentCompleter([OptopusNullSpaceNamesCompleter])]
         $Space              = "",
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         $Environment        = "",
 
-        [ArgumentCompleter([OctopusUserNamesCompleter])]
+        [ArgumentCompleter([OptopusUserNamesCompleter])]
         $User               = "",
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project            = "",
 
         $Path,
@@ -247,22 +247,22 @@ function Get-OctopusDeploymentReport        {
     #WorksheetName Deployments -FreezeTopRow -AutoSize -TableStyle Medium6 -ClearSheet -PivotRows "Project Name" -PivotColumns "State" -PivotData @{"Release ID" = "Count"}  -PivotFilter Month -PivotChartType ColumnStacked
     [cmdletBinding(DefaultParameterSetName='Default')]
     param   (
-        [ArgumentCompleter([OctopusMachineRolesCompleter])]
+        [ArgumentCompleter([OptopusMachineRolesCompleter])]
         [Parameter(ParameterSetName='Default',   Mandatory=$true,Position=0)]
         $Role           ,
 
         [Parameter(ParameterSetName='ByMachine', Mandatory=$true,  ValueFromPipeline=$true)]
         [Alias('Id','Name','TargetName')]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Machine,
 
         [Parameter(Position=1)]
         $Path ,
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         $Environment = '',
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project     = '',
 
         $DaysToQuery = 365,

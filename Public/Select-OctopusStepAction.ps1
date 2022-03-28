@@ -1,4 +1,4 @@
-    function Select-OctopusStepAction {
+function Select-OctopusStepAction {
     <#
       .SYNOPSIS
         Selects one or more actions, or the position of  matching actions from a step in a deployment process

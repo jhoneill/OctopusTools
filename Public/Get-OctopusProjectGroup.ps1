@@ -30,7 +30,7 @@ General notes
         [Parameter(ParameterSetName='Default',  Mandatory=$false, Position=0 ,ValueFromPipeline=$true)]
         [Parameter(ParameterSetName='Projects', Mandatory=$true,  Position=0, ValueFromPipeline=$true)]
         [Alias('Id','Name')]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $ProjectGroup,
 
         [Parameter(ParameterSetName='Projects', Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
@@ -44,4 +44,3 @@ General notes
         else   {$item}
     }
 }
-

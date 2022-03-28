@@ -5,10 +5,10 @@ function New-OctopusLifeCyclePhase          {
         [Parameter(Mandatory=$true,Position=0)]
         $Name,
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         $AutomaticEnvironments,
 
-        [ArgumentCompleter([OctopusEnvironmentNamesCompleter])]
+        [ArgumentCompleter([OptopusEnvironmentNamesCompleter])]
         $OptionalEnvironments,
 
         [Parameter(ParameterSetName='SomeMustComplete',Mandatory=$true)]

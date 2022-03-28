@@ -36,7 +36,7 @@ function Edit-OctopusProcess      {
     [cmdletbinding(DefaultParameterSetName='ByProjectName',SupportsShouldProcess=$true,ConfirmImpact='high')]
     param (
         [Parameter(Mandatory=$true,  ParameterSetName='ByProjectName', Position=0 )]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(Mandatory=$true,  ParameterSetName='ByProcess')]

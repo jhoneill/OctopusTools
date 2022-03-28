@@ -1,7 +1,7 @@
 
 <#
 #see also https://Octopus.com/docs/Octopus-rest-api/examples/step-templates/export-step-templates
-$h =  Get-OctopusActionTemplate $TEMPATE  | Undo-JsonConversion
+$h =  Get-OctopusActionTemplate $TEMPLATE  | Undo-JsonConversion
 $h.Remove('Version')
 $h.Remove('ID')
 $h.Remove('Links')
@@ -10,7 +10,6 @@ $h.Parameters | foreach {$_.remove('ID')}
 convertto-json $h -Depth 10 > deleteme.json
 #api/Spaces-1/actiontemplates/categories
 #>
-
 
 function New-OctopusActionTemplateParameter {
     param        (
@@ -66,7 +65,7 @@ function New-OctopusScriptActionTemplate    {
         $Name,
 
         $Description,
-        [ArgumentCompleter([OctopusPackageNamesCompleter])]
+        [ArgumentCompleter([OptopusPackageNamesCompleter])]
         [Parameter(ValueFromPipelineByPropertyName=$true,ParameterSetName='Package',Mandatory=$true)]
         $Package,
 
@@ -146,11 +145,11 @@ function Set-OctopusScriptActionTemplate    {
     param (
         [Parameter(Mandatory=$true,Position=0)]
         [Alias('Name','Id')]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $ActionTemplate,
         $Description,
 
-        [ArgumentCompleter([OctopusPackageNamesCompleter])]
+        [ArgumentCompleter([OptopusPackageNamesCompleter])]
         [Parameter(ValueFromPipelineByPropertyName=$true,ParameterSetName='Package',Mandatory=$true)]
         $Package,
 

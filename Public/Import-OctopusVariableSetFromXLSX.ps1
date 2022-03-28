@@ -32,6 +32,34 @@ function Import-OctopusVariableSetFromXLSX  {
       .PARAMETER ProgressPreference
         Allows the Progress bar act differently in the function, specifying silentlyContinue will suppress it.
 
+      .EXAMPLE
+        newVars1.xlsx contains this as sheet1.
+        ----------------------------------------------------------------------
+        |Name               |Value      |IsEditable |Type       |IsSensitive |
+        ----------------------------------------------------------------------
+        |HttpsPortBanana    |9001       |TRUE       |String     |FALSE       |
+        |HttpsPortPineapple |9002       |TRUE	    |String     |FALSE       |
+        ----------------------------------------------------------------------
+        ps > Import-OctopusVariableSetFromXLSX -Path newVars1.xlsx -LibraryVariableSet 'Shared Settings'
+
+        Adds the two variables to the "shared settings"  library variableSet
+        After the import two new sheets "Sheet1-Before" and "Sheet1-After" will show
+
+      .EXAMPLE
+        newVars2.xlsx contains this as sheet1
+        -------------------------------------------------------------------------------------------------------------
+        |Name       |Value                  |IsEditable |Type       |IsSensitive    |SetOwnerType	|SetOwnerName   |
+        -------------------------------------------------------------------------------------------------------------
+        |HttpsPort  |#{HttpsPortBanana}     |TRUE       |String     |FALSE          |Project        |Banana         |
+        |iisWebSite |Banana                 |TRUE       |String     |FALSE          |Project        |Banana         |
+        |HttpsPort  |#{HttpsPortPineapple}  |TRUE	    |String     |FALSE          |Project        |Pineapple      |
+        |iisWebSite |Pineapple              |TRUE	    |String     |FALSE          |Project        |Pineapple      |
+        -------------------------------------------------------------------------------------------------------------
+
+        ps > Import-OctopusVariableSetFromXLSX -Path newVars2.xlsx   -WorkSheetName sheet1 -noArtifact
+
+        Adds two variables to two different projects.
+
 #>
     [cmdletbinding(DefaultParameterSetName='Default',SupportsShouldProcess=$true,ConfirmImpact='High')]
     param (
@@ -41,11 +69,11 @@ function Import-OctopusVariableSetFromXLSX  {
         [Parameter(Position=1)]
         $WorkSheetName  = '*',
 
-        [ArgumentCompleter([OctopusLibVariableSetsCompleter])]
+        [ArgumentCompleter([OptopusLibVariableSetsCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Library')]
         $LibraryVariableSet,
 
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         [Parameter(Mandatory=$true,ParameterSetName='Project')]
         $Project,
 
@@ -90,7 +118,7 @@ function Import-OctopusVariableSetFromXLSX  {
                 if      (-not $variableSet)                                          {throw "Could not get the a variable set from the parameters and data file provided." ; return}
                 elseif  (-not $NoArtifact) {
                     Write-Progress -Activity "Importing from worksheet $($ws.name)" -Status "Writing 'before' snapshot for '$($VariableSet.OwnerId)'"
-                    $varsbefore = Expand-OctopusVariableSet $VariableSet | Select-Object Id, Name, Type, Scope, IsSensitive, Value
+                    $varsbefore = Expand-OctopusVariableSet $VariableSet | Select-Object Id, Name, Type, ExpandedScope, IsSensitive, Value, SetOwnerType, SetOwnerName | Sort-Object  Name,  ExpandedScope
                     $excel      = $varsbefore | Export-excel -WorkSheetName ($ws.name + "-Before") -BoldTopRow -FreezeTopRow -AutoSize -Append -ExcelPackage $excel -PassThru
                 }
                 #endregion
@@ -100,7 +128,7 @@ function Import-OctopusVariableSetFromXLSX  {
                 if (-not $result) {Write-Warning "--NO UPDATES WERE MADE FOR $($VariableSet.id) --"}
                 #region If we're making an artifact export the 'After' state
                 if (-not $NoArtifact) {
-                    if ($result) {$varsafter =  Expand-OctopusVariableSet $result | Select-Object Id, Name, Type, Scope, IsSensitive, Value }
+                    if ($result) {$varsafter =  Expand-OctopusVariableSet $VariableSet | Select-Object Id, Name, Type, ExpandedScope, IsSensitive, Value, SetOwnerType, SetOwnerName  | Sort-Object  Name,  ExpandedScope }
                     else         {$varsafter = $varsBefore}
                     Write-Progress -Activity "Importing from worksheet $($ws.name)" -Status "Writing 'after' snapshot for '$($VariableSet.OwnerId)'"
                     $excel =      $varsafter | Export-excel -WorkSheetName ($ws.name + "-After" ) -BoldTopRow -FreezeTopRow -AutoSize -Append -ExcelPackage $excel -PassThru

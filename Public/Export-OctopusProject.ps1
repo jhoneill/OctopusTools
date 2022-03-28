@@ -1,4 +1,3 @@
-
 function Export-OctopusProject              {
     <#
       .SYNOPSIS
@@ -27,7 +26,7 @@ function Export-OctopusProject              {
     #>
     param (
         [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project,
         $ZipFilePwd = "DontTellany1!",
         $ZipDestination,

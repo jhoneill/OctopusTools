@@ -12,32 +12,59 @@ function Export-OctopusDeploymentProcess    {
     .PARAMETER PassThru
         If specified the newly created files will be returned.
 
+    .PARAMETER StepFilter
+        If specfied, filters steps of the deployment process by name, by zero based index or by a Where-object Style filter-Script.
+        The filter may be an object with a name property, but may not be a multi-member array.
+
+    .PARAMETER ActionsFilter
+        If specified, filters actions within selected steps by name, by zero based index or by a Where-object Style filter-Script.
+        The filter may be an object with a name property, but may not be a multi-member array.
+
     .PARAMETER Force
         By default the file will not be overwritten if it exists, specifying -Force ensures it will be.
 
     .EXAMPLE
-        C:> Export-OctopusDeploymentProcess banana* -pt
+        ps> Export-OctopusDeploymentProcess banana* -pt
         Exports the process from each project with a name starting "banana" to its own file in the current folder.
         The files will be named  deploymentprocess-Projects-XYZ.json  where XYX is the project ID number.
+
+     .EXAMPLE
+         ps> Export-OctopusDeploymentProcess -Project 'Pineapple' -step  {$_.name -match "^Deploy|https"}  -Action  "*https*" -Destination .\HttpsActions.json  -Force
+         Exports the process from the Project names "Pineapple" filtering to only steps with names which contain "https" or start "Deploy..."
+         And filtering the actions within the steps to only those like *https* (note the step filter is a where-stype scriptblock with a match operator
+         and the action filter is a string with wild cards which is used for a Like operation ). The result is sent to a file which will be overwritten if it exists.
     #>
     param (
         [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true)]
-        [ArgumentCompleter([OctopusGenericNamesCompleter])]
+        [ArgumentCompleter([OptopusGenericNamesCompleter])]
         $Project,
 
         [Parameter(Position=1)]
         $Destination = $pwd,
 
         [Parameter(Position=2)]
-        [ValidateCount(0,1)]
-        [Alias('Name','Index')]
-        [object[]]$Filter,
+        [Alias('Filter')]
+        $StepFilter = "*",
+
+        $ActionFilter = "*",
 
         [Alias('PT')]
         [switch]$PassThru,
 
         [switch]$Force
     )
+    begin {
+        function resolveFilter {
+            param($f)
+            if      ($f -is [scriptblock]) {return $f    }
+            elseif  ($f -is [ValueType])   {return [scriptblock]::Create(  '$true')}   # back stop filter script returns true so everything is return
+            elseif  ($f -is [string])      {return [scriptblock]::Create(('$_.name -like "{0}"' -f $f       )) }
+            elseif  ($f.Name)              {return [scriptblock]::Create(('$_.name -like "{0}"' -f $f.Name )) }
+            else    { throw  [System.Management.Automation.ValidationMetadataException]::new("The filter must be a string, a script block or an object with a name property.")}
+        }
+        $sf = resolveFilter $StepFilter
+        $af = resolveFilter $ActionFilter
+    }
 
     process {
         if ($Project.Name -and $Project.DeploymentProcess ) {
@@ -47,37 +74,41 @@ function Export-OctopusDeploymentProcess    {
         else {
             $process    = Get-OctopusProject -Name $Project -DeploymentProcess
             if ($process.count -gt 1)  {
-                $process.ProjectId | Export-OctopusDeploymentProcess -Destination $Destination -PassThru:$PassThru -Force:$Force
+                $null = $PSBoundParameters.Remove('Project')
+                $process.ProjectId | Export-OctopusDeploymentProcess @PSBoundParameters
                 return
             }
             elseif ($process.ProjectName) {$name = $process.ProjectName}
-            else {$name = $process.Id}
+            else                          {$name = $process.Id}
         }
+
         $Steps   = @()
-        foreach ($SourceStep in $process.Steps) {
-            $newstep        = $SourceStep.psobject.copy()
-            $newstep.Id     = $null
-            $newstep.Actions = @($SourceStep.Actions.ForEach({$_.psobject.copy()}))
+        if      ($StepFilter -is [System.ValueType])     {
+                $SourceSteps = $process.Steps[$StepFilter]
+        }
+        else    {$sourceSteps = $process.Steps.Where($sf) }
+        foreach ($s in $SourceSteps   ) {
+            $newstep         = $s.psobject.copy()
+            $newstep.Id      = $null
+            if ($ActionFilter -is [System.ValueType]) {
+                    $newstep.Actions = @($s.Actions[$ActionFilter].psobject.Copy() )
+            }
+            else {  $newstep.Actions = @($s.Actions.where($af).ForEach({$_.psobject.copy()})) }
             foreach ($a in $newstep.Actions) {
                         $a.id       = $null
                         $a.packages = @($_.packages.foreach({$_.psobject.copy()}))
                         $a.packages.foreach({$_.id = $null  })
             }
-            $steps += $newstep
+            if (-not $newstep.Actions) {Write-Warning "All actions were removed from step $($newstep.Name)"}
+            else                       {$steps += $newstep}
         }
-        foreach ($f in $Filter) {
-            if      ($f.Name)         {$f = [scriptblock]::Create(('$_.name -like "{0}"' -f $f.Name )) }
-            elseif  ($f -is [string]) {$f = [scriptblock]::Create(('$_.name -like "{0}"' -f $f      )) }
 
-            if      ($f -is [System.ValueType])     {$Steps = $Steps[$f]}
-            else    {$steps = $steps | Where-Object $f}
-            if     (-not $steps) {Write-Warning "All steps were excluded by the filter";return}
-        }
-        if     (Test-Path $Destination -PathType Container )    {$DestPath = (Join-Path $Destination $name) + '.json' }
+        if     (-not $steps) {Write-Warning "All steps were excluded by the filter"; return}
+        elseif (Test-Path $Destination -PathType Container )    {$DestPath = (Join-Path $Destination $name) + '.json' }
         elseif (Test-Path $Destination -IsValid -PathType Leaf) {$DestPath = $Destination}
-        else   {Write-Warning "Invalid destination" ;return}
+        else   {Write-Warning "'$Destination' is not a valid destination" ;return}
+
         ConvertTo-Json $Steps -Depth 10 | Out-File $DestPath -NoClobber:(-not $Force)
         if     ($PassThru) {Get-Item $DestPath}
     }
 }
-# to do . Import ! You don't know if the export is good or bad until you import. morning Mr Schrodinger

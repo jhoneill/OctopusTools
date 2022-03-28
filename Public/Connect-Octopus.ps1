@@ -47,7 +47,7 @@ function Connect-Octopus                    {
         [Parameter(ParameterSetName='Cred')]
         [Parameter(ParameterSetName='SpaceOnly')]
         [Parameter(ParameterSetName='SpaceURLKey')]
-        [ArgumentCompleter([OctopusNullSpaceNamesCompleter])]
+        [ArgumentCompleter([OptopusNullSpaceNamesCompleter])]
         $Space  =  'Default',
 
         [Parameter(ParameterSetName='Status',Mandatory=$true)]
@@ -56,8 +56,8 @@ function Connect-Octopus                    {
     if       ($StatusOnly) {Write-Verbose "Checking the connection, but not updating it."}
     elseif   ($Credential) {
               $env:OctopusApiKey = $OctopusApiKey = $Credential.GetNetworkCredential().Password
-              if ($env:OctopusUrl -Match "^https?://") {$env:OctopusUrl = $OctopusUrl = $Credential.userName }
-              else                                     {$env:OctopusUrl = $OctopusUrl = "http://$($Credential.userName )"}
+              if ($Credential.userName -Match "^https?://") {$env:OctopusUrl = $OctopusUrl = $Credential.userName }
+              else                                          {$env:OctopusUrl = $OctopusUrl = "http://$($Credential.userName )"}
               $OctopusApiInformation  = Invoke-OctopusMethod -EndPoint 'api' -spaceId $null -APIKey $OctopusApiKey -OctopusUrl $OctopusUrl -ErrorAction stop -Verbose:$False
     }
     elseif   ($OctopusApiKey -and $OctopusUrl ) {
